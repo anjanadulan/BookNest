@@ -4,6 +4,7 @@ import { ShoppingCart, Edit, Trash2, BookOpen } from 'lucide-react';
 export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDelete }) {
   const isOutOfStock = book.stock <= 0;
   const [imgError, setImgError] = useState(false);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   const showPlaceholder = !book.coverUrl || imgError;
 
@@ -113,6 +114,35 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
           ISBN: {book.isbn || 'N/A'}
         </span>
+
+        {/* Dynamic description preview expander */}
+        {book.description && (
+          <div style={{ marginTop: '8px', fontSize: '0.8rem', lineHeight: '1.4' }}>
+            <span style={{ color: 'var(--text-muted)' }}>
+              {isDescExpanded 
+                ? book.description 
+                : (book.description.length > 90 ? `${book.description.substring(0, 90)}...` : book.description)
+              }
+            </span>
+            {book.description.length > 90 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setIsDescExpanded(!isDescExpanded); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  padding: '0 0 0 6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  textDecoration: 'underline'
+                }}
+              >
+                {isDescExpanded ? 'Show Less' : 'Read More'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Price & Action row */}

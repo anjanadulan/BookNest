@@ -33,6 +33,9 @@ public class Book {
     @Column(name = "cover_url")
     private String coverUrl;
 
+    @Column(name = "description", length = 1000)
+    private String description;
+
 
     public int getId() {
         return id;
@@ -96,6 +99,14 @@ public class Book {
 
     public void setCoverUrl(String coverUrl) {
         this.coverUrl = coverUrl;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
 

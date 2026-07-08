@@ -46,6 +46,7 @@ export default function App() {
   const [bookFormStock, setBookFormStock] = useState('');
   const [bookFormCategoryId, setBookFormCategoryId] = useState('');
   const [bookFormCoverUrl, setBookFormCoverUrl] = useState('');
+  const [bookFormDescription, setBookFormDescription] = useState('');
 
   // Port Mappings
   const BOOK_API = 'http://localhost:8081/api';
@@ -390,6 +391,7 @@ export default function App() {
     setBookFormPrice('');
     setBookFormStock('');
     setBookFormCoverUrl('');
+    setBookFormDescription('');
     setBookFormCategoryId(categories[0]?.id || 1);
     setIsAdminBookFormOpen(true);
   };
@@ -402,6 +404,7 @@ export default function App() {
     setBookFormPrice(book.price.toString());
     setBookFormStock(book.stock.toString());
     setBookFormCoverUrl(book.coverUrl || '');
+    setBookFormDescription(book.description || '');
     setBookFormCategoryId(book.category?.id || 1);
     setIsAdminBookFormOpen(true);
   };
@@ -429,6 +432,7 @@ export default function App() {
       price: parseFloat(bookFormPrice),
       stock: parseInt(bookFormStock),
       coverUrl: bookFormCoverUrl,
+      description: bookFormDescription,
       category: {
         id: parseInt(bookFormCategoryId)
       }
@@ -761,6 +765,25 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Cover Image URL</label>
                 <input type="text" value={bookFormCoverUrl} onChange={(e) => setBookFormCoverUrl(e.target.value)} placeholder="e.g. https://images.unsplash.com/photo-..." />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Book Description</label>
+                <textarea 
+                  value={bookFormDescription} 
+                  onChange={(e) => setBookFormDescription(e.target.value)} 
+                  placeholder="Enter book synopsis or summary..."
+                  rows={3}
+                  style={{
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--glass-border)',
+                    borderRadius: '6px',
+                    color: 'var(--text-main)',
+                    padding: '10px 12px',
+                    fontSize: '0.9rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
