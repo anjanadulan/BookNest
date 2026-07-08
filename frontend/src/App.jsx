@@ -8,11 +8,17 @@ import UserProfile from './components/UserProfile';
 import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle, LogIn } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null); // Default to not logged in (Guest)
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = sessionStorage.getItem('booknest_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [activeTab, setActiveTab] = useState('store');
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [cartItems, setCartItems] = useState([]); // Used for both guest local storage and user database cart
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = sessionStorage.getItem('booknest_cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  }); // Used for both guest local storage and user database cart
   const [orders, setOrders] = useState([]);
   const [payments, setPayments] = useState([]);
   
@@ -81,6 +87,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setCurrentUser(data);
+        sessionStorage.setItem('booknest_user', JSON.stringify(data));
         return true;
       }
     } catch (e) {
@@ -155,9 +162,19 @@ export default function App() {
     }
   }, [activeTab]);
 
+  // Sync guest cart to sessionStorage
+  useEffect(() => {
+    if (!currentUser) {
+      sessionStorage.setItem('booknest_cart', JSON.stringify(cartItems));
+    } else {
+      sessionStorage.removeItem('booknest_cart');
+    }
+  }, [cartItems, currentUser]);
+
   // Auth actions
   const handleLoginSuccess = async (user) => {
     setCurrentUser(user);
+    sessionStorage.setItem('booknest_user', JSON.stringify(user));
     
     // If they have items in guest cart, migrate them to database
     if (user.role === 'CUSTOMER' && cartItems.length > 0) {
@@ -209,6 +226,8 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    sessionStorage.removeItem('booknest_user');
+    sessionStorage.removeItem('booknest_cart');
     setCartItems([]);
     setOrders([]);
     setPayments([]);
