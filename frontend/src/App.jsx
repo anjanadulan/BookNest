@@ -6,6 +6,7 @@ import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
 import UserProfile from './components/UserProfile';
 import BookDetailModal from './components/BookDetailModal';
+import UserManagement from './components/UserManagement';
 import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle, LogIn } from 'lucide-react';
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
   const [bookFormCoverUrl, setBookFormCoverUrl] = useState('');
   const [bookFormDescription, setBookFormDescription] = useState('');
   const [selectedDetailBook, setSelectedDetailBook] = useState(null);
+  const [adminActiveSubTab, setAdminActiveSubTab] = useState('sales'); // 'sales' | 'accounts'
 
   // Port Mappings
   const BOOK_API = 'http://localhost:8081/api';
@@ -597,80 +599,122 @@ export default function App() {
               </div>
             </div>
 
-            {/* Orders & Payments auditing logs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
-              
-              {/* Order Auditing Table */}
-              <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Orders Ledger (`order-service`)</h3>
-                {loadingOrders ? (
-                  <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
-                ) : orders.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No orders have been recorded in database.</p>
-                ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                        <th style={{ padding: '10px' }}>Order ID</th>
-                        <th style={{ padding: '10px' }}>User ID</th>
-                        <th style={{ padding: '10px' }}>Order Date</th>
-                        <th style={{ padding: '10px' }}>Total Amount</th>
-                        <th style={{ padding: '10px' }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.map(o => (
-                        <tr key={o.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                          <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>#{o.id}</td>
-                          <td style={{ padding: '12px 10px' }}>ID: {o.userId}</td>
-                          <td style={{ padding: '12px 10px' }}>{new Date(o.orderDate).toLocaleString()}</td>
-                          <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${o.totalAmount.toFixed(2)}</td>
-                          <td style={{ padding: '12px 10px' }}><span style={{ color: o.status === 'COMPLETED' ? '#10b981' : '#f59e0b', fontSize: '0.8rem', fontWeight: 'bold' }}>{o.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              {/* Payments Auditing Table */}
-              <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Payments Ledger (`payment-service`)</h3>
-                {loadingOrders ? (
-                  <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
-                ) : payments.length === 0 ? (
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No payment records found.</p>
-                ) : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                        <th style={{ padding: '10px' }}>Transaction ID</th>
-                        <th style={{ padding: '10px' }}>Order ID</th>
-                        <th style={{ padding: '10px' }}>User ID</th>
-                        <th style={{ padding: '10px' }}>Simulated Date</th>
-                        <th style={{ padding: '10px' }}>Amount</th>
-                        <th style={{ padding: '10px' }}>Method</th>
-                        <th style={{ padding: '10px' }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map(p => (
-                        <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                          <td style={{ padding: '12px 10px', color: 'var(--color-accent)', fontWeight: 'bold', fontFamily: 'monospace' }}>{p.transactionId}</td>
-                          <td style={{ padding: '12px 10px' }}>#{p.orderId}</td>
-                          <td style={{ padding: '12px 10px' }}>ID: {p.userId}</td>
-                          <td style={{ padding: '12px 10px' }}>{new Date(p.paymentDate).toLocaleString()}</td>
-                          <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${p.amount.toFixed(2)}</td>
-                          <td style={{ padding: '12px 10px' }}>{p.paymentMethod}</td>
-                          <td style={{ padding: '12px 10px' }}><span style={{ color: p.status === 'SUCCESS' ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 'bold' }}>{p.status}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
+            {/* Admin console sub-tab selector */}
+            <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '2px', marginTop: '10px' }}>
+              <button 
+                onClick={() => setAdminActiveSubTab('sales')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: adminActiveSubTab === 'sales' ? 'var(--color-primary)' : 'var(--text-muted)',
+                  borderBottom: adminActiveSubTab === 'sales' ? '2px solid var(--color-primary)' : 'none',
+                  padding: '10px 16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                Sales Ledger Audits
+              </button>
+              <button 
+                onClick={() => setAdminActiveSubTab('accounts')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: adminActiveSubTab === 'accounts' ? 'var(--color-primary)' : 'var(--text-muted)',
+                  borderBottom: adminActiveSubTab === 'accounts' ? '2px solid var(--color-primary)' : 'none',
+                  padding: '10px 16px',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                Manage User Accounts
+              </button>
             </div>
+
+            {adminActiveSubTab === 'sales' && (
+              /* Orders & Payments auditing logs */
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
+                
+                {/* Order Auditing Table */}
+                <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Orders Ledger (`order-service`)</h3>
+                  {loadingOrders ? (
+                    <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
+                  ) : orders.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No orders have been recorded in database.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '10px' }}>Order ID</th>
+                          <th style={{ padding: '10px' }}>User ID</th>
+                          <th style={{ padding: '10px' }}>Order Date</th>
+                          <th style={{ padding: '10px' }}>Total Amount</th>
+                          <th style={{ padding: '10px' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orders.map(o => (
+                          <tr key={o.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                            <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>#{o.id}</td>
+                            <td style={{ padding: '12px 10px' }}>ID: {o.userId}</td>
+                            <td style={{ padding: '12px 10px' }}>{new Date(o.orderDate).toLocaleString()}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${o.totalAmount.toFixed(2)}</td>
+                            <td style={{ padding: '12px 10px' }}><span style={{ color: o.status === 'COMPLETED' ? '#10b981' : '#f59e0b', fontSize: '0.8rem', fontWeight: 'bold' }}>{o.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                {/* Payments Auditing Table */}
+                <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Payments Ledger (`payment-service`)</h3>
+                  {loadingOrders ? (
+                    <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
+                  ) : payments.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No payment records found.</p>
+                  ) : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '10px' }}>Transaction ID</th>
+                          <th style={{ padding: '10px' }}>Order ID</th>
+                          <th style={{ padding: '10px' }}>User ID</th>
+                          <th style={{ padding: '10px' }}>Simulated Date</th>
+                          <th style={{ padding: '10px' }}>Amount</th>
+                          <th style={{ padding: '10px' }}>Method</th>
+                          <th style={{ padding: '10px' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payments.map(p => (
+                          <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                            <td style={{ padding: '12px 10px', color: 'var(--color-accent)', fontWeight: 'bold', fontFamily: 'monospace' }}>{p.transactionId}</td>
+                            <td style={{ padding: '12px 10px' }}>#{p.orderId}</td>
+                            <td style={{ padding: '12px 10px' }}>ID: {p.userId}</td>
+                            <td style={{ padding: '12px 10px' }}>{new Date(p.paymentDate).toLocaleString()}</td>
+                            <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${p.amount.toFixed(2)}</td>
+                            <td style={{ padding: '12px 10px' }}>{p.paymentMethod}</td>
+                            <td style={{ padding: '12px 10px' }}><span style={{ color: p.status === 'SUCCESS' ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 'bold' }}>{p.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {adminActiveSubTab === 'accounts' && (
+              <UserManagement currentUser={currentUser} />
+            )}
           </div>
         )}
 
