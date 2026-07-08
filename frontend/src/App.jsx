@@ -3,14 +3,15 @@ import Navbar from './components/Navbar';
 import BookCard from './components/BookCard';
 import CartSidebar from './components/CartSidebar';
 import CheckoutModal from './components/CheckoutModal';
-import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle } from 'lucide-react';
+import AuthModal from './components/AuthModal';
+import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle, LogIn } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState({ id: 2, name: 'John Doe', email: 'john@gmail.com', role: 'CUSTOMER' });
+  const [currentUser, setCurrentUser] = useState(null); // Default to not logged in (Guest)
   const [activeTab, setActiveTab] = useState('store');
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState([]); // Used for both guest local storage and user database cart
   const [orders, setOrders] = useState([]);
   const [payments, setPayments] = useState([]);
   
@@ -25,7 +26,9 @@ export default function App() {
   // Modals & Sidebars
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isAdminBookFormOpen, setIsAdminBookFormOpen] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
 
   // Admin Book Form State
   const [editingBook, setEditingBook] = useState(null);
@@ -52,11 +55,6 @@ export default function App() {
         setBooks(booksData);
       }
       
-      const catsRes = await fetch(`${BOOK_API}/books`); // Wait, we can fetch categories or books.
-      // Category is loaded from books nested properties or category list if endpoint exists.
-      // Let's deduce categories dynamically from the books or mock categories if database fails.
-      // But the database setup seeded categories 1, 2, 3, 4!
-      // Let's populate category dropdown dynamically, but also seed a default category list.
       const defaultCats = [
         { id: 1, name: 'Fiction' },
         { id: 2, name: 'Science' },
@@ -71,10 +69,9 @@ export default function App() {
     }
   };
 
-  // Fetch cart items for current user
+  // Fetch cart items for logged-in user
   const fetchCart = async () => {
-    if (currentUser.role !== 'CUSTOMER') {
-      setCartItems([]);
+    if (!currentUser || currentUser.role !== 'CUSTOMER') {
       return;
     }
     try {
@@ -90,7 +87,7 @@ export default function App() {
 
   // Fetch admin logs (orders & payments)
   const fetchAdminData = async () => {
-    if (currentUser.role !== 'ADMIN') return;
+    if (!currentUser || currentUser.role !== 'ADMIN') return;
     setLoadingOrders(true);
     try {
       const ordersRes = await fetch(`${ORDER_API}/orders`);
@@ -116,12 +113,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetchCart();
-    fetchAdminData();
-    // If user is admin, default active tab back to storefront if cart was open
-    if (currentUser.role === 'ADMIN') {
-      setIsCartOpen(false);
+    if (currentUser) {
+      fetchCart();
+      fetchAdminData();
+      if (currentUser.role === 'ADMIN') {
+        setIsCartOpen(false);
+      } else {
+        setActiveTab('store');
+      }
     } else {
+      // If logged out, reset admin logs and active tab to storefront
+      setOrders([]);
+      setPayments([]);
       setActiveTab('store');
     }
   }, [currentUser]);
@@ -132,10 +135,82 @@ export default function App() {
     }
   }, [activeTab]);
 
+  // Auth actions
+  const handleLoginSuccess = async (user) => {
+    setCurrentUser(user);
+    
+    // If they have items in guest cart, migrate them to database
+    if (user.role === 'CUSTOMER' && cartItems.length > 0) {
+      try {
+        for (const item of cartItems) {
+          await fetch(`${CART_API}/cart`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              bookId: item.bookId,
+              quantity: item.quantity
+            })
+          });
+        }
+      } catch (e) {
+        console.error("Error migrating cart: ", e);
+      }
+    }
+
+    // Refresh cart from database if Customer
+    if (user.role === 'CUSTOMER') {
+      const res = await fetch(`${CART_API}/cart?userId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCartItems(data);
+      }
+    } else if (user.role === 'ADMIN') {
+      // Fetch admin data
+      setLoadingOrders(true);
+      try {
+        const ordersRes = await fetch(`${ORDER_API}/orders`);
+        if (ordersRes.ok) setOrders(await ordersRes.json());
+        const paymentsRes = await fetch(`${PAYMENT_API}/payments`);
+        if (paymentsRes.ok) setPayments(await paymentsRes.json());
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingOrders(false);
+      }
+    }
+
+    // If they had a checkout intent, trigger it directly
+    if (pendingCheckout) {
+      setIsCheckoutOpen(true);
+      setPendingCheckout(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCartItems([]);
+    setOrders([]);
+    setPayments([]);
+    setActiveTab('store');
+    setPendingCheckout(false);
+  };
+
   // Cart operations
   const handleAddToCart = async (bookId) => {
-    // Check if item already exists
     const existing = cartItems.find(item => item.bookId === bookId);
+    
+    // Guest Mode
+    if (!currentUser) {
+      if (existing) {
+        setCartItems(cartItems.map(item => item.bookId === bookId ? { ...item, quantity: item.quantity + 1 } : item));
+      } else {
+        setCartItems([...cartItems, { id: -Date.now(), bookId, quantity: 1, userId: null }]);
+      }
+      return;
+    }
+
+    // Logged-in User Mode
     if (existing) {
       handleUpdateCartQuantity(existing.id, existing.quantity + 1);
       return;
@@ -160,6 +235,13 @@ export default function App() {
   };
 
   const handleUpdateCartQuantity = async (cartItemId, newQuantity) => {
+    // Guest Mode
+    if (!currentUser) {
+      setCartItems(cartItems.map(item => item.id === cartItemId ? { ...item, quantity: newQuantity } : item));
+      return;
+    }
+
+    // Logged-in User Mode
     const item = cartItems.find(i => i.id === cartItemId);
     if (!item) return;
 
@@ -183,6 +265,13 @@ export default function App() {
   };
 
   const handleDeleteCartItem = async (cartItemId) => {
+    // Guest Mode
+    if (!currentUser) {
+      setCartItems(cartItems.filter(item => item.id !== cartItemId));
+      return;
+    }
+
+    // Logged-in User Mode
     try {
       const res = await fetch(`${CART_API}/cart/${cartItemId}`, {
         method: 'DELETE'
@@ -334,7 +423,8 @@ export default function App() {
       {/* Navbar component */}
       <Navbar 
         currentUser={currentUser}
-        onChangeUser={setCurrentUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
         activeTab={activeTab}
         onChangeTab={setActiveTab}
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
@@ -405,7 +495,7 @@ export default function App() {
                   <BookCard 
                     key={book.id}
                     book={book}
-                    currentUser={currentUser}
+                    currentUser={currentUser || { role: 'CUSTOMER' }} // Default role so guest gets customer storefront view
                     onAddToCart={handleAddToCart}
                     onEdit={handleOpenEditBook}
                     onDelete={handleDeleteBook}
@@ -417,7 +507,7 @@ export default function App() {
         )}
 
         {/* TAB 2: Admin Dashboard Console */}
-        {activeTab === 'admin' && currentUser.role === 'ADMIN' && (
+        {activeTab === 'admin' && currentUser && currentUser.role === 'ADMIN' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
             
             {/* Welcome banner & Add Button */}
@@ -545,18 +635,35 @@ export default function App() {
         onDeleteItem={handleDeleteCartItem}
         onCheckout={() => {
           setIsCartOpen(false);
-          setIsCheckoutOpen(true);
+          if (!currentUser) {
+            setPendingCheckout(true);
+            setIsAuthModalOpen(true);
+          } else {
+            setIsCheckoutOpen(true);
+          }
         }}
       />
 
       {/* Checkout Wizard modal */}
-      <CheckoutModal 
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        cartItems={cartItems}
-        books={books}
-        onPlaceOrder={handlePlaceOrder}
-        currentUser={currentUser}
+      {currentUser && (
+        <CheckoutModal 
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          cartItems={cartItems}
+          books={books}
+          onPlaceOrder={handlePlaceOrder}
+          currentUser={currentUser}
+        />
+      )}
+
+      {/* Auth Modal (Login / Sign Up) */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setPendingCheckout(false);
+        }}
+        onLoginSuccess={handleLoginSuccess}
       />
 
       {/* Admin Add/Edit Catalog Book Modal */}

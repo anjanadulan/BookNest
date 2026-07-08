@@ -1,14 +1,7 @@
 import React from 'react';
-import { BookOpen, ShoppingCart, User, ShieldAlert } from 'lucide-react';
+import { BookOpen, ShoppingCart, User, ShieldAlert, LogIn, LogOut } from 'lucide-react';
 
-export default function Navbar({ currentUser, onChangeUser, activeTab, onChangeTab, cartItemCount, onOpenCart }) {
-  // Pre-seeded users matching db_setup.sql
-  const users = [
-    { id: 2, name: 'John Doe', email: 'john@gmail.com', role: 'CUSTOMER' },
-    { id: 3, name: 'Jane Smith', email: 'jane@gmail.com', role: 'CUSTOMER' },
-    { id: 1, name: 'System Admin', email: 'admin@booknest.com', role: 'ADMIN' }
-  ];
-
+export default function Navbar({ currentUser, onOpenAuth, onLogout, activeTab, onChangeTab, cartItemCount, onOpenCart }) {
   return (
     <header className="glass-card" style={{
       margin: '20px',
@@ -41,7 +34,7 @@ export default function Navbar({ currentUser, onChangeUser, activeTab, onChangeT
         </span>
       </div>
 
-      {/* Main Navigation */}
+      {/* Main Navigation (Only visible when storefront or admin is relevant) */}
       <nav style={{ display: 'flex', gap: '8px' }}>
         <button
           onClick={() => onChangeTab('store')}
@@ -55,7 +48,7 @@ export default function Navbar({ currentUser, onChangeUser, activeTab, onChangeT
           Storefront
         </button>
 
-        {currentUser.role === 'ADMIN' && (
+        {currentUser && currentUser.role === 'ADMIN' && (
           <button
             onClick={() => onChangeTab('admin')}
             className="btn-secondary"
@@ -74,8 +67,8 @@ export default function Navbar({ currentUser, onChangeUser, activeTab, onChangeT
 
       {/* Action / User Session controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Cart Icon (only for customers) */}
-        {currentUser.role === 'CUSTOMER' && (
+        {/* Cart Icon (visible for Guest or Customers, hidden for Admins) */}
+        {(!currentUser || currentUser.role === 'CUSTOMER') && (
           <button 
             onClick={onOpenCart} 
             className="btn-secondary"
@@ -109,31 +102,49 @@ export default function Navbar({ currentUser, onChangeUser, activeTab, onChangeT
           </button>
         )}
 
-        {/* Role Switcher Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '6px 12px', borderRadius: 'var(--border-radius-md)', border: '1px solid var(--glass-border)' }}>
-          <User size={16} color={currentUser.role === 'ADMIN' ? 'var(--color-accent)' : 'var(--color-primary)'} />
-          <select 
-            value={currentUser.id} 
-            onChange={(e) => {
-              const selected = users.find(u => u.id === parseInt(e.target.value));
-              if (selected) onChangeUser(selected);
-            }}
+        {/* User Session Badging & Login / Logout Action */}
+        {!currentUser ? (
+          <button 
+            onClick={onOpenAuth}
+            className="btn-primary"
             style={{
-              background: 'transparent',
-              border: 'none',
-              padding: 0,
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer'
+              padding: '8px 16px',
+              fontSize: '0.85rem'
             }}
           >
-            {users.map(u => (
-              <option key={u.id} value={u.id} style={{ background: 'var(--bg-secondary)', color: '#fff' }}>
-                {u.name} ({u.role})
-              </option>
-            ))}
-          </select>
-        </div>
+            <LogIn size={14} /> Log In / Sign Up
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(255,255,255,0.03)',
+              padding: '6px 14px',
+              borderRadius: 'var(--border-radius-md)',
+              border: '1px solid var(--glass-border)',
+              fontSize: '0.85rem',
+              fontWeight: 500
+            }}>
+              <User size={14} color={currentUser.role === 'ADMIN' ? 'var(--color-accent)' : 'var(--color-primary)'} />
+              <span>{currentUser.name}</span>
+            </div>
+            
+            <button 
+              onClick={onLogout}
+              className="btn-secondary"
+              style={{
+                padding: '8px 12px',
+                borderRadius: 'var(--border-radius-md)',
+                color: '#fca5a5',
+                borderColor: 'rgba(239, 68, 68, 0.2)'
+              }}
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );
