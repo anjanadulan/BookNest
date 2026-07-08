@@ -45,7 +45,6 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
       const result = await onUpdateProfile(updatedUserPayload);
       if (result) {
         setSuccessMsg('Profile information updated successfully!');
-        // Clear password fields
         setNewPassword('');
         setConfirmPassword('');
         setChangePassword(false);
@@ -62,8 +61,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto 0 auto' }}>
       <div className="glass-card" style={{
-        backgroundColor: '#09090b',
-        border: '1px solid #27272a',
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--glass-border)',
         borderRadius: '12px',
         padding: '40px 32px',
         display: 'flex',
@@ -73,10 +72,10 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
       }}>
         {/* Title Header */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 600, color: '#fff', letterSpacing: '-0.5px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.5px' }}>
             Account Settings
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#a1a1aa' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             Update your profile identity and manage your credentials.
           </p>
         </div>
@@ -123,8 +122,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Name Field */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <User size={14} color="#71717a" /> Full name
+            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <User size={14} color="var(--text-muted)" /> Full name
             </label>
             <input 
               type="text" 
@@ -133,10 +132,10 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
               onChange={(e) => setName(e.target.value)} 
               placeholder="e.g. Alan Turing" 
               style={{
-                background: '#18181b',
-                border: '1px solid #27272a',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '6px',
-                color: '#fff',
+                color: 'var(--text-main)',
                 padding: '10px 12px',
                 fontSize: '0.9rem'
               }}
@@ -145,8 +144,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
 
           {/* Email Field */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Mail size={14} color="#71717a" /> Email address
+            <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Mail size={14} color="var(--text-muted)" /> Email address
             </label>
             <input 
               type="email" 
@@ -155,10 +154,10 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
               onChange={(e) => setEmail(e.target.value)} 
               placeholder="you@example.com" 
               style={{
-                background: '#18181b',
-                border: '1px solid #27272a',
+                background: 'var(--bg-primary)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '6px',
-                color: '#fff',
+                color: 'var(--text-main)',
                 padding: '10px 12px',
                 fontSize: '0.9rem'
               }}
@@ -167,14 +166,14 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
 
           {/* Account Role Badge (Read-only for safety) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 500, color: '#71717a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Shield size={14} /> Security Role
+            <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Shield size={14} color="var(--text-muted)" /> Security Role
             </span>
             <div style={{
-              background: '#09090b',
-              border: '1px solid #27272a',
+              background: 'var(--bg-primary)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '6px',
-              color: currentUser.role === 'ADMIN' ? 'var(--color-accent)' : 'var(--color-primary)',
+              color: currentUser.role === 'ADMIN' ? 'var(--color-secondary)' : 'var(--color-primary)',
               padding: '10px 12px',
               fontSize: '0.9rem',
               fontWeight: 'bold',
@@ -185,8 +184,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
           </div>
 
           {/* Toggle Password Reset Option */}
-          <div style={{ borderTop: '1px solid #27272a', paddingTop: '20px', marginTop: '10px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#e4e4e7', cursor: 'pointer' }}>
+          <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px', marginTop: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}>
               <input 
                 type="checkbox" 
                 checked={changePassword} 
@@ -195,7 +194,7 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
                   setErrorMsg('');
                   setSuccessMsg('');
                 }}
-                style={{ width: 'auto', height: 'auto', accentColor: '#fff' }} 
+                style={{ width: 'auto', height: 'auto', accentColor: 'var(--color-primary)' }} 
               />
               Change account password
             </label>
@@ -206,8 +205,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', animation: 'fadeIn 0.2s ease-out' }}>
               {/* New Password */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Lock size={14} color="#71717a" /> New password
+                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Lock size={14} color="var(--text-muted)" /> New password
                 </label>
                 <input 
                   type="password" 
@@ -216,10 +215,10 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
                   onChange={(e) => setNewPassword(e.target.value)} 
                   placeholder="••••••••" 
                   style={{
-                    background: '#18181b',
-                    border: '1px solid #27272a',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--glass-border)',
                     borderRadius: '6px',
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     padding: '10px 12px',
                     fontSize: '0.9rem'
                   }}
@@ -228,8 +227,8 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
 
               {/* Confirm New Password */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Lock size={14} color="#71717a" /> Confirm new password
+                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Lock size={14} color="var(--text-muted)" /> Confirm new password
                 </label>
                 <input 
                   type="password" 
@@ -238,10 +237,10 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
                   onChange={(e) => setConfirmPassword(e.target.value)} 
                   placeholder="••••••••" 
                   style={{
-                    background: '#18181b',
-                    border: '1px solid #27272a',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--glass-border)',
                     borderRadius: '6px',
-                    color: '#fff',
+                    color: 'var(--text-main)',
                     padding: '10px 12px',
                     fontSize: '0.9rem'
                   }}
@@ -255,11 +254,11 @@ export default function UserProfile({ currentUser, onUpdateProfile }) {
             type="submit" 
             disabled={submitting}
             style={{
-              background: '#ffffff',
-              color: '#09090b',
+              background: 'var(--color-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '6px',
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: '0.9rem',
               padding: '12px',
               cursor: submitting ? 'not-allowed' : 'pointer',
