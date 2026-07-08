@@ -1,493 +1,414 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, CreditCard, CheckCircle, Plus, Edit2, AlertCircle, ShoppingCart } from 'lucide-react';
 import Navbar from './components/Navbar';
 import BookCard from './components/BookCard';
 import CartSidebar from './components/CartSidebar';
-
-// Microservices API Base URLs
-const API = {
-  user: 'http://localhost:8085/api',
-  book: 'http://localhost:8081/api',
-  cart: 'http://localhost:8082/api',
-  order: 'http://localhost:8083/api',
-  payment: 'http://localhost:8084/api'
-};
+import CheckoutModal from './components/CheckoutModal';
+import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle } from 'lucide-react';
 
 export default function App() {
-  // Global States
-  const [currentUser, setCurrentUser] = useState(null);
-  const [usersList, setUsersList] = useState([]);
-  const [booksList, setBooksList] = useState([]);
-  const [categoriesList, setCategoriesList] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
-  const [ordersList, setOrdersList] = useState([]);
-  const [paymentsList, setPaymentsList] = useState([]);
-
-  // UI States
+  const [currentUser, setCurrentUser] = useState({ id: 2, name: 'John Doe', email: 'john@gmail.com', role: 'CUSTOMER' });
   const [activeTab, setActiveTab] = useState('store');
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [payments, setPayments] = useState([]);
+  
+  // Loading states
+  const [loadingBooks, setLoadingBooks] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  
+  // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
-  // Checkout Form States
-  const [checkoutStep, setCheckoutStep] = useState('none'); // 'none', 'details', 'paying', 'confirmed'
-  const [checkoutAddress, setCheckoutAddress] = useState('');
-  const [checkoutPaymentMethod, setCheckoutPaymentMethod] = useState('CREDIT_CARD');
-  const [transactionId, setTransactionId] = useState('');
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  // Modals & Sidebars
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isAdminBookFormOpen, setIsAdminBookFormOpen] = useState(false);
 
-  // Admin Book Form States
-  const [editingBook, setEditingBook] = useState(null); // null means adding a new book
-  const [bookForm, setBookForm] = useState({
-    title: '',
-    author: '',
-    isbn: '',
-    price: '',
-    stock: '',
-    categoryId: ''
-  });
+  // Admin Book Form State
+  const [editingBook, setEditingBook] = useState(null);
+  const [bookFormTitle, setBookFormTitle] = useState('');
+  const [bookFormAuthor, setBookFormAuthor] = useState('');
+  const [bookFormIsbn, setBookFormIsbn] = useState('');
+  const [bookFormPrice, setBookFormPrice] = useState('');
+  const [bookFormStock, setBookFormStock] = useState('');
+  const [bookFormCategoryId, setBookFormCategoryId] = useState('');
 
-  // Fetch initial configuration data
+  // Port Mappings
+  const BOOK_API = 'http://localhost:8081/api';
+  const CART_API = 'http://localhost:8082/api';
+  const ORDER_API = 'http://localhost:8083/api';
+  const PAYMENT_API = 'http://localhost:8084/api';
+
+  // Fetch initial books & categories
+  const fetchCatalog = async () => {
+    setLoadingBooks(true);
+    try {
+      const booksRes = await fetch(`${BOOK_API}/books`);
+      if (booksRes.ok) {
+        const booksData = await booksRes.json();
+        setBooks(booksData);
+      }
+      
+      const catsRes = await fetch(`${BOOK_API}/books`); // Wait, we can fetch categories or books.
+      // Category is loaded from books nested properties or category list if endpoint exists.
+      // Let's deduce categories dynamically from the books or mock categories if database fails.
+      // But the database setup seeded categories 1, 2, 3, 4!
+      // Let's populate category dropdown dynamically, but also seed a default category list.
+      const defaultCats = [
+        { id: 1, name: 'Fiction' },
+        { id: 2, name: 'Science' },
+        { id: 3, name: 'History' },
+        { id: 4, name: 'Biography' }
+      ];
+      setCategories(defaultCats);
+    } catch (e) {
+      console.error("Error fetching catalog: ", e);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
+
+  // Fetch cart items for current user
+  const fetchCart = async () => {
+    if (currentUser.role !== 'CUSTOMER') {
+      setCartItems([]);
+      return;
+    }
+    try {
+      const res = await fetch(`${CART_API}/cart?userId=${currentUser.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCartItems(data);
+      }
+    } catch (e) {
+      console.error("Error fetching cart: ", e);
+    }
+  };
+
+  // Fetch admin logs (orders & payments)
+  const fetchAdminData = async () => {
+    if (currentUser.role !== 'ADMIN') return;
+    setLoadingOrders(true);
+    try {
+      const ordersRes = await fetch(`${ORDER_API}/orders`);
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData);
+      }
+      const paymentsRes = await fetch(`${PAYMENT_API}/payments`);
+      if (paymentsRes.ok) {
+        const paymentsData = await paymentsRes.json();
+        setPayments(paymentsData);
+      }
+    } catch (e) {
+      console.error("Error fetching admin logs: ", e);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  // Sync on mount & user switches
   useEffect(() => {
-    fetchUsers();
-    fetchBooks();
-    fetchCategories();
+    fetchCatalog();
   }, []);
 
-  // Fetch cart whenever active user changes
   useEffect(() => {
-    if (currentUser) {
-      fetchCart(currentUser.id);
-      if (currentUser.role === 'ADMIN') {
-        fetchAdminData();
-      }
+    fetchCart();
+    fetchAdminData();
+    // If user is admin, default active tab back to storefront if cart was open
+    if (currentUser.role === 'ADMIN') {
+      setIsCartOpen(false);
     } else {
-      setCartItems([]);
+      setActiveTab('store');
     }
   }, [currentUser]);
 
-  // Network Fetch Functions
-  const fetchUsers = async () => {
-    try {
-      const res = await fetch(`${API.user}/users`);
-      const data = await res.json();
-      setUsersList(data);
-      if (data.length > 0) {
-        // Default to the customer John Doe if available, or first user
-        const defaultUser = data.find(u => u.email === 'john@gmail.com') || data[0];
-        setCurrentUser(defaultUser);
-      }
-    } catch (err) {
-      console.error('Error fetching users:', err);
+  useEffect(() => {
+    if (activeTab === 'admin') {
+      fetchAdminData();
     }
-  };
-
-  const fetchBooks = async () => {
-    try {
-      const res = await fetch(`${API.book}/books`);
-      const data = await res.json();
-      setBooksList(data);
-    } catch (err) {
-      console.error('Error fetching books:', err);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch(`${API.book}/books`); // fetch category data if endpoint matches, but wait
-      // The book service has /books which includes category relationship
-      // Categories seeding script loaded categories: Fiction, Science, History, Biography.
-      // Let's hardcode the categories list matching db_setup.sql for robust category filtering,
-      // or extract categories dynamically from loaded books
-      const catsRes = await fetch(`${API.book}/books`);
-      const booksData = await catsRes.json();
-      const extractedCategories = [];
-      booksData.forEach(b => {
-        if (b.category && !extractedCategories.some(c => c.id === b.category.id)) {
-          extractedCategories.push(b.category);
-        }
-      });
-      // Fallback if empty
-      if (extractedCategories.length === 0) {
-        setCategoriesList([
-          { id: 1, name: 'Fiction' },
-          { id: 2, name: 'Science' },
-          { id: 3, name: 'History' },
-          { id: 4, name: 'Biography' }
-        ]);
-      } else {
-        setCategoriesList(extractedCategories);
-      }
-    } catch (err) {
-      console.error('Error fetching categories:', err);
-    }
-  };
-
-  const fetchCart = async (userId) => {
-    try {
-      const res = await fetch(`${API.cart}/cart?userId=${userId}`);
-      const data = await res.json();
-      setCartItems(data);
-    } catch (err) {
-      console.error('Error fetching cart:', err);
-    }
-  };
-
-  const fetchAdminData = async () => {
-    try {
-      const ordersRes = await fetch(`${API.order}/orders`);
-      const ordersData = await ordersRes.json();
-      setOrdersList(ordersData);
-
-      const paymentsRes = await fetch(`${API.payment}/payments`);
-      const paymentsData = await paymentsRes.json();
-      setPaymentsList(paymentsData);
-    } catch (err) {
-      console.error('Error fetching admin dashboards:', err);
-    }
-  };
+  }, [activeTab]);
 
   // Cart operations
   const handleAddToCart = async (bookId) => {
-    if (!currentUser) return;
+    // Check if item already exists
+    const existing = cartItems.find(item => item.bookId === bookId);
+    if (existing) {
+      handleUpdateCartQuantity(existing.id, existing.quantity + 1);
+      return;
+    }
+
     try {
-      // Find if item already exists in active user's cart
-      const existing = cartItems.find(item => item.bookId === bookId);
-      if (existing) {
-        // Increment quantity by 1
-        handleUpdateCartItemQuantity(existing.id, existing.quantity + 1);
-      } else {
-        // Add new CartItem
-        const res = await fetch(`${API.cart}/cart`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            bookId: bookId,
-            quantity: 1
-          })
-        });
-        if (res.ok) {
-          fetchCart(currentUser.id);
-        }
+      const res = await fetch(`${CART_API}/cart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          bookId: bookId,
+          quantity: 1
+        })
+      });
+      if (res.ok) {
+        fetchCart();
       }
-    } catch (err) {
-      console.error('Error adding to cart:', err);
+    } catch (e) {
+      alert("Error adding to cart: " + e.message);
     }
   };
 
-  const handleUpdateCartItemQuantity = async (cartItemId, quantity) => {
+  const handleUpdateCartQuantity = async (cartItemId, newQuantity) => {
     const item = cartItems.find(i => i.id === cartItemId);
     if (!item) return;
+
     try {
-      const res = await fetch(`${API.cart}/cart`, {
+      const res = await fetch(`${CART_API}/cart`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: cartItemId,
-          userId: item.userId,
+          userId: currentUser.id,
           bookId: item.bookId,
-          quantity: quantity
+          quantity: newQuantity
         })
       });
       if (res.ok) {
-        fetchCart(currentUser.id);
+        fetchCart();
       }
-    } catch (err) {
-      console.error('Error updating quantity:', err);
+    } catch (e) {
+      alert("Error updating quantity: " + e.message);
     }
   };
 
-  const handleRemoveCartItem = async (cartItemId) => {
+  const handleDeleteCartItem = async (cartItemId) => {
     try {
-      const res = await fetch(`${API.cart}/cart/${cartItemId}`, {
+      const res = await fetch(`${CART_API}/cart/${cartItemId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
-        fetchCart(currentUser.id);
+        fetchCart();
       }
-    } catch (err) {
-      console.error('Error deleting cart item:', err);
+    } catch (e) {
+      alert("Error deleting cart item: " + e.message);
     }
   };
 
-  // Checkout pipeline (verifying cross-service validation)
-  const handleCheckoutProcess = async (e) => {
-    e.preventDefault();
-    if (cartItems.length === 0 || !currentUser) return;
-    setLoadingCheckout(true);
-
+  // Transaction orchestration (Order + Payment + Cart Clear)
+  const handlePlaceOrder = async (orderPayload, paymentMethod) => {
     try {
-      // 1. Calculate Total Amount
-      let total = 0;
-      const orderItems = [];
-
-      for (const item of cartItems) {
-        const book = booksList.find(b => b.id === item.bookId);
-        if (book) {
-          total += book.price * item.quantity;
-          orderItems.push({
-            bookId: item.bookId,
-            quantity: item.quantity,
-            price: book.price
-          });
-        }
-      }
-
-      // 2. Create Order in order-service
-      const orderRes = await fetch(`${API.order}/orders`, {
+      // 1. Post Order
+      const orderRes = await fetch(`${ORDER_API}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          totalAmount: total,
-          status: 'PENDING',
-          orderDate: new Date().toISOString(),
-          orderItems: orderItems
-        })
+        body: JSON.stringify(orderPayload)
       });
-      const orderData = await orderRes.json();
+      if (!orderRes.ok) throw new Error("Order creation failed on backend");
+      
+      const createdOrder = await orderRes.json();
+      const orderId = createdOrder.id;
 
-      if (!orderRes.ok) throw new Error('Order creation failed');
+      // 2. Post Payment
+      const mockTxnId = `TXN-${Math.floor(10000000 + Math.random() * 90000000)}-MOCK`;
+      const paymentPayload = {
+        orderId: orderId,
+        userId: currentUser.id,
+        amount: orderPayload.totalAmount,
+        paymentMethod: paymentMethod,
+        status: 'SUCCESS',
+        transactionId: mockTxnId,
+        paymentDate: new Date().toISOString()
+      };
 
-      // 3. Process mock Payment in payment-service
-      const mockTransactionId = `TXN-${Math.floor(Math.random() * 90000000) + 10000000}`;
-      const paymentRes = await fetch(`${API.payment}/payments`, {
+      const paymentRes = await fetch(`${PAYMENT_API}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderData.id,
-          userId: currentUser.id,
-          amount: total,
-          paymentMethod: checkoutPaymentMethod,
-          status: 'SUCCESS',
-          transactionId: mockTransactionId,
-          paymentDate: new Date().toISOString()
-        })
+        body: JSON.stringify(paymentPayload)
       });
+      if (!paymentRes.ok) throw new Error("Payment ledger record failed on backend");
 
-      if (!paymentRes.ok) throw new Error('Payment processing failed');
+      const createdPayment = await paymentRes.json();
 
-      // 4. Update order status to COMPLETED
-      await fetch(`${API.order}/orders`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: orderData.id,
-          userId: currentUser.id,
-          totalAmount: total,
-          status: 'COMPLETED',
-          orderDate: orderData.orderDate
-        })
-      });
-
-      // 5. Update book stock levels in book-service
+      // 3. Clear Cart Items in Cart Service
       for (const item of cartItems) {
-        const book = booksList.find(b => b.id === item.bookId);
-        if (book) {
-          const updatedStock = Math.max(0, book.stock - item.quantity);
-          await fetch(`${API.book}/books`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: book.id,
-              title: book.title,
-              author: book.author,
-              isbn: book.isbn,
-              price: book.price,
-              stock: updatedStock,
-              category: book.category
-            })
-          });
-        }
+        await fetch(`${CART_API}/cart/${item.id}`, { method: 'DELETE' });
       }
 
-      // 6. Delete items in cart-service
-      for (const item of cartItems) {
-        await fetch(`${API.cart}/cart/${item.id}`, { method: 'DELETE' });
-      }
+      // Refresh states
+      fetchCart();
+      fetchCatalog();
 
-      // Complete Checkout Flow
-      setTransactionId(mockTransactionId);
-      setCheckoutStep('confirmed');
-      fetchCart(currentUser.id);
-      fetchBooks(); // refresh stock numbers on storefront
-      if (currentUser.role === 'ADMIN') fetchAdminData();
-
-    } catch (err) {
-      console.error('Checkout error:', err);
-      alert('Checkout process failed. Please check your service connections.');
-    } finally {
-      setLoadingCheckout(false);
+      return {
+        orderId: orderId,
+        transactionId: createdPayment.transactionId,
+        amount: createdPayment.amount,
+        paymentMethod: createdPayment.paymentMethod,
+        status: createdPayment.status
+      };
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
   };
 
   // Admin Book Management
+  const handleOpenAddBook = () => {
+    setEditingBook(null);
+    setBookFormTitle('');
+    setBookFormAuthor('');
+    setBookFormIsbn('');
+    setBookFormPrice('');
+    setBookFormStock('');
+    setBookFormCategoryId(categories[0]?.id || 1);
+    setIsAdminBookFormOpen(true);
+  };
+
+  const handleOpenEditBook = (book) => {
+    setEditingBook(book);
+    setBookFormTitle(book.title);
+    setBookFormAuthor(book.author);
+    setBookFormIsbn(book.isbn || '');
+    setBookFormPrice(book.price.toString());
+    setBookFormStock(book.stock.toString());
+    setBookFormCategoryId(book.category?.id || 1);
+    setIsAdminBookFormOpen(true);
+  };
+
+  const handleDeleteBook = async (bookId) => {
+    if (!window.confirm("Are you sure you want to delete this book?")) return;
+    try {
+      const res = await fetch(`${BOOK_API}/books/${bookId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchCatalog();
+      }
+    } catch (e) {
+      alert("Error deleting book: " + e.message);
+    }
+  };
+
   const handleSaveBook = async (e) => {
     e.preventDefault();
-    try {
-      const selectedCategoryObj = categoriesList.find(c => c.id === parseInt(bookForm.categoryId));
-      const payload = {
-        title: bookForm.title,
-        author: bookForm.author,
-        isbn: bookForm.isbn,
-        price: parseFloat(bookForm.price),
-        stock: parseInt(bookForm.stock),
-        category: selectedCategoryObj || null
-      };
-
-      if (editingBook) {
-        payload.id = editingBook.id;
+    const payload = {
+      title: bookFormTitle,
+      author: bookFormAuthor,
+      isbn: bookFormIsbn,
+      price: parseFloat(bookFormPrice),
+      stock: parseInt(bookFormStock),
+      category: {
+        id: parseInt(bookFormCategoryId)
       }
+    };
 
-      const res = await fetch(`${API.book}/books`, {
+    if (editingBook) {
+      payload.id = editingBook.id;
+    }
+
+    try {
+      const res = await fetch(`${BOOK_API}/books`, {
         method: editingBook ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-
       if (res.ok) {
-        setBookForm({ title: '', author: '', isbn: '', price: '', stock: '', categoryId: '' });
-        setEditingBook(null);
-        fetchBooks();
+        setIsAdminBookFormOpen(false);
+        fetchCatalog();
       }
-    } catch (err) {
-      console.error('Error saving book:', err);
+    } catch (e) {
+      alert("Error saving book: " + e.message);
     }
   };
 
-  const handleDeleteBook = async (bookId) => {
-    if (!window.confirm('Are you sure you want to delete this book?')) return;
-    try {
-      const res = await fetch(`${API.book}/books/${bookId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        fetchBooks();
-      }
-    } catch (err) {
-      console.error('Error deleting book:', err);
-    }
-  };
-
-  const handleEditBookInit = (book) => {
-    setEditingBook(book);
-    setBookForm({
-      title: book.title,
-      author: book.author,
-      isbn: book.isbn || '',
-      price: book.price.toString(),
-      stock: book.stock.toString(),
-      categoryId: book.category ? book.category.id.toString() : ''
-    });
-  };
-
-  // Filtering book listings
-  const filteredBooks = booksList.filter(book => {
-    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Filter storefront list
+  const filteredBooks = books.filter(book => {
+    const matchesSearch = book.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           book.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || 
-                            (book.category && book.category.name === selectedCategory);
+    const matchesCategory = selectedCategory === '' || book.category?.id === parseInt(selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <div style={{ paddingBottom: '60px' }}>
-      {/* Navbar */}
-      <Navbar
+    <div style={{ paddingBottom: '80px' }}>
+      {/* Navbar component */}
+      <Navbar 
         currentUser={currentUser}
-        usersList={usersList}
-        onUserSwitch={setCurrentUser}
-        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+        onChangeUser={setCurrentUser}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onCartToggle={() => setIsCartOpen(!isCartOpen)}
+        onChangeTab={setActiveTab}
+        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+        onOpenCart={() => setIsCartOpen(true)}
       />
 
-      {/* Cart Drawer */}
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cartItems={cartItems}
-        booksList={booksList}
-        onUpdateQuantity={handleUpdateCartItemQuantity}
-        onRemoveItem={handleRemoveCartItem}
-        onCheckout={() => {
-          setIsCartOpen(false);
-          setCheckoutStep('details');
-        }}
-      />
-
-      {/* Main Container */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-        {/* Bookstore View */}
-        {activeTab === 'store' && checkoutStep === 'none' && (
+      {/* Main Content Area */}
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        
+        {/* TAB 1: Storefront */}
+        {activeTab === 'store' && (
           <div>
-            {/* Filter controls */}
-            <div style={{
+            {/* Search and category filters */}
+            <div className="glass-card" style={{
               display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              alignItems: 'center',
               gap: '16px',
-              marginBottom: '32px'
+              padding: '16px 24px',
+              alignItems: 'center',
+              marginBottom: '30px',
+              flexWrap: 'wrap'
             }}>
-              {/* Category switches */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setSelectedCategory('All')}
-                  className={selectedCategory === 'All' ? 'btn-primary' : 'btn-secondary'}
-                  style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '0.85rem' }}
-                >
-                  All Categories
-                </button>
-                {categoriesList.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.name)}
-                    className={selectedCategory === cat.name ? 'btn-primary' : 'btn-secondary'}
-                    style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '0.85rem' }}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexGrow: 1, position: 'relative' }}>
+                <Search size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '14px' }} />
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search books by title or author..."
+                  style={{ width: '100%', paddingLeft: '42px' }}
+                />
               </div>
 
-              {/* Search Bar */}
-              <input
-                type="text"
-                placeholder="Search by title or author..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-input"
-                style={{ width: '300px', maxWidth: '100%', borderRadius: '10px' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Layers size={18} color="var(--text-muted)" />
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  style={{ minWidth: '180px' }}
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button onClick={fetchCatalog} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <RefreshCw size={14} /> Refresh
+              </button>
             </div>
 
-            {/* Book Catalog Grid */}
-            {filteredBooks.length === 0 ? (
-              <div className="glass-panel" style={{
-                textAlign: 'center',
-                padding: '60px 20px',
-                color: 'var(--text-secondary)'
-              }}>
-                <AlertCircle size={40} style={{ color: 'var(--accent-purple)', marginBottom: '16px' }} />
-                <p>No books found matching the selected filters.</p>
+            {/* Books Grid */}
+            {loadingBooks ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="glass-card skeleton" style={{ height: '300px' }} />
+                ))}
+              </div>
+            ) : filteredBooks.length === 0 ? (
+              <div className="glass-card" style={{ padding: '60px 20px', textAlign: 'center' }}>
+                <AlertCircle size={40} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '6px' }}>No Books Found</h3>
+                <p style={{ color: 'var(--text-muted)' }}>Try adjusting your search criteria or categories filter.</p>
               </div>
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                gap: '24px'
-              }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
                 {filteredBooks.map(book => (
-                  <BookCard
+                  <BookCard 
                     key={book.id}
                     book={book}
+                    currentUser={currentUser}
                     onAddToCart={handleAddToCart}
-                    onEdit={handleEditBookInit}
+                    onEdit={handleOpenEditBook}
                     onDelete={handleDeleteBook}
-                    isAdmin={currentUser && currentUser.role === 'ADMIN'}
                   />
                 ))}
               </div>
@@ -495,288 +416,231 @@ export default function App() {
           </div>
         )}
 
-        {/* Checkout Steps */}
-        {checkoutStep === 'details' && (
-          <div className="glass-panel animate-fade-in" style={{
-            maxWidth: '600px',
-            margin: '40px auto',
-            padding: '32px',
-            borderRadius: '16px'
-          }}>
-            <h2 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CreditCard style={{ color: 'var(--accent-neon)' }} />
-              Billing & Payment
-            </h2>
-            <form onSubmit={handleCheckoutProcess} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Shipping Address</label>
-                <textarea
-                  required
-                  placeholder="Enter your shipping address..."
-                  value={checkoutAddress}
-                  onChange={(e) => setCheckoutAddress(e.target.value)}
-                  className="glass-input"
-                  rows={3}
-                />
+        {/* TAB 2: Admin Dashboard Console */}
+        {activeTab === 'admin' && currentUser.role === 'ADMIN' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+            
+            {/* Welcome banner & Add Button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff' }}>Admin Console Dashboard</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Directly control catalog books, monitor placed orders, and trace payment ledgers.</p>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Payment Method</label>
-                <select
-                  value={checkoutPaymentMethod}
-                  onChange={(e) => setCheckoutPaymentMethod(e.target.value)}
-                  className="glass-input"
-                  style={{ backgroundColor: 'rgba(9, 13, 22, 0.8)', cursor: 'pointer' }}
-                >
-                  <option value="CREDIT_CARD" style={{ backgroundColor: '#090d16', color: '#fff' }}>Credit Card</option>
-                  <option value="PAYPAL" style={{ backgroundColor: '#090d16', color: '#fff' }}>PayPal</option>
-                  <option value="BANK_TRANSFER" style={{ backgroundColor: '#090d16', color: '#fff' }}>Bank Transfer</option>
-                </select>
-              </div>
-
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                borderTop: '1px solid rgba(255,255,255,0.05)',
-                paddingTop: '20px',
-                marginTop: '10px'
-              }}>
-                <button
-                  type="button"
-                  onClick={() => setCheckoutStep('none')}
-                  className="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loadingCheckout}
-                  className="btn-primary"
-                >
-                  {loadingCheckout ? 'Processing Order...' : 'Pay & Complete'}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {checkoutStep === 'confirmed' && (
-          <div className="glass-panel animate-fade-in" style={{
-            maxWidth: '500px',
-            margin: '60px auto',
-            padding: '40px',
-            textAlign: 'center',
-            borderRadius: '16px'
-          }}>
-            <CheckCircle size={64} style={{ color: 'var(--accent-success)', marginBottom: '20px' }} />
-            <h2 style={{ marginBottom: '12px' }}>Order Placed Successfully!</h2>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.95rem' }}>
-              Your order has been recorded across the microservices catalog.
-            </p>
-
-            <div className="glass-panel" style={{
-              padding: '16px',
-              backgroundColor: 'rgba(255,255,255,0.02)',
-              borderRadius: '12px',
-              fontSize: '0.85rem',
-              marginBottom: '32px',
-              textAlign: 'left',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}>
-              <div><strong>Gateway Status:</strong> SUCCESS</div>
-              <div><strong>Transaction ID:</strong> <span style={{ color: 'var(--accent-neon)', fontFamily: 'monospace' }}>{transactionId}</span></div>
+              
+              <button onClick={handleOpenAddBook} className="btn-primary" style={{ background: 'linear-gradient(135deg, var(--color-accent) 0%, #7209b7 100%)', boxShadow: 'none' }}>
+                <Plus size={16} /> Add Catalog Book
+              </button>
             </div>
 
-            <button
-              onClick={() => {
-                setCheckoutStep('none');
-                setCheckoutAddress('');
-              }}
-              className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Back to Bookstore
-            </button>
-          </div>
-        )}
-
-        {/* Admin Dashboard Tab */}
-        {activeTab === 'admin' && currentUser && currentUser.role === 'ADMIN' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px', marginTop: '20px' }}>
-            {/* Book Manager Panel */}
-            <div className="glass-panel" style={{ padding: '32px', borderRadius: '16px' }}>
-              <h2 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus style={{ color: 'var(--accent-neon)' }} />
-                {editingBook ? 'Edit Book Record' : 'Add New Book to Inventory'}
-              </h2>
-              <form onSubmit={handleSaveBook} style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '20px'
-              }}>
-                <input
-                  required
-                  type="text"
-                  placeholder="Book Title"
-                  value={bookForm.title}
-                  onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
-                  className="glass-input"
-                />
-                <input
-                  required
-                  type="text"
-                  placeholder="Author"
-                  value={bookForm.author}
-                  onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
-                  className="glass-input"
-                />
-                <input
-                  type="text"
-                  placeholder="ISBN"
-                  value={bookForm.isbn}
-                  onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
-                  className="glass-input"
-                />
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  placeholder="Price ($)"
-                  value={bookForm.price}
-                  onChange={(e) => setBookForm({ ...bookForm, price: e.target.value })}
-                  className="glass-input"
-                />
-                <input
-                  required
-                  type="number"
-                  placeholder="Stock Level"
-                  value={bookForm.stock}
-                  onChange={(e) => setBookForm({ ...bookForm, stock: e.target.value })}
-                  className="glass-input"
-                />
-                <select
-                  required
-                  value={bookForm.categoryId}
-                  onChange={(e) => setBookForm({ ...bookForm, categoryId: e.target.value })}
-                  className="glass-input"
-                  style={{ backgroundColor: 'rgba(9, 13, 22, 0.8)', cursor: 'pointer' }}
-                >
-                  <option value="" disabled style={{ backgroundColor: '#090d16', color: '#6b7280' }}>Select Category</option>
-                  {categoriesList.map(cat => (
-                    <option key={cat.id} value={cat.id} style={{ backgroundColor: '#090d16', color: '#fff' }}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-
-                <div style={{
-                  gridColumn: '1 / -1',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: '12px',
-                  marginTop: '10px'
-                }}>
-                  {editingBook && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingBook(null);
-                        setBookForm({ title: '', author: '', isbn: '', price: '', stock: '', categoryId: '' });
-                      }}
-                      className="btn-secondary"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  <button type="submit" className="btn-primary">
-                    {editingBook ? 'Save Modifications' : 'Publish Book'}
-                  </button>
+            {/* Microservice statistics cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: 'rgba(99, 102, 241, 0.1)', color: 'var(--color-secondary)' }}><Layers size={24} /></div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Catalog Items</span>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{books.length} Books</h3>
                 </div>
-              </form>
+              </div>
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: 'rgba(0, 245, 212, 0.1)', color: 'var(--color-primary)' }}><UserCheck size={24} /></div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Orders Placed</span>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>{orders.length}</h3>
+                </div>
+              </div>
+              <div className="glass-card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: 'rgba(217, 70, 239, 0.1)', color: 'var(--color-accent)' }}><CreditCard size={24} /></div>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Transactions Audited</span>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>${payments.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}</h3>
+                </div>
+              </div>
             </div>
 
-            {/* Dashboard Audit Log Table (Orders & Payments) */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-              gap: '24px'
-            }}>
-              {/* Order Ledger */}
-              <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', overflow: 'hidden' }}>
-                <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShoppingBag size={20} style={{ color: 'var(--accent-purple)' }} />
-                  Order Ledger (order-service)
-                </h3>
-                <div style={{ overflowX: 'auto', maxHeight: '300px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            {/* Orders & Payments auditing logs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
+              
+              {/* Order Auditing Table */}
+              <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Orders Ledger (`order-service`)</h3>
+                {loadingOrders ? (
+                  <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
+                ) : orders.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No orders have been recorded in database.</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                        <th style={{ padding: '8px' }}>Order ID</th>
-                        <th style={{ padding: '8px' }}>User ID</th>
-                        <th style={{ padding: '8px' }}>Date</th>
-                        <th style={{ padding: '8px' }}>Amount</th>
-                        <th style={{ padding: '8px' }}>Status</th>
+                      <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                        <th style={{ padding: '10px' }}>Order ID</th>
+                        <th style={{ padding: '10px' }}>User ID</th>
+                        <th style={{ padding: '10px' }}>Order Date</th>
+                        <th style={{ padding: '10px' }}>Total Amount</th>
+                        <th style={{ padding: '10px' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {ordersList.map(ord => (
-                        <tr key={ord.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td style={{ padding: '8px', fontWeight: '600' }}>#{ord.id}</td>
-                          <td style={{ padding: '8px' }}>User {ord.userId}</td>
-                          <td style={{ padding: '8px' }}>{new Date(ord.orderDate).toLocaleDateString()}</td>
-                          <td style={{ padding: '8px', color: 'var(--accent-neon)' }}>${ord.totalAmount.toFixed(2)}</td>
-                          <td style={{ padding: '8px' }}>
-                            <span className="badge" style={{
-                              backgroundColor: ord.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                              color: ord.status === 'COMPLETED' ? 'var(--accent-success)' : '#f59e0b'
-                            }}>{ord.status}</span>
-                          </td>
+                      {orders.map(o => (
+                        <tr key={o.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>#{o.id}</td>
+                          <td style={{ padding: '12px 10px' }}>ID: {o.userId}</td>
+                          <td style={{ padding: '12px 10px' }}>{new Date(o.orderDate).toLocaleString()}</td>
+                          <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${o.totalAmount.toFixed(2)}</td>
+                          <td style={{ padding: '12px 10px' }}><span style={{ color: o.status === 'COMPLETED' ? '#10b981' : '#f59e0b', fontSize: '0.8rem', fontWeight: 'bold' }}>{o.status}</span></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
+                )}
               </div>
 
-              {/* Payment Ledger */}
-              <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', overflow: 'hidden' }}>
-                <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <CreditCard size={20} style={{ color: 'var(--accent-neon)' }} />
-                  Payment Ledger (payment-service)
-                </h3>
-                <div style={{ overflowX: 'auto', maxHeight: '300px' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              {/* Payments Auditing Table */}
+              <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '16px', color: '#fff' }}>Payments Ledger (`payment-service`)</h3>
+                {loadingOrders ? (
+                  <div className="skeleton" style={{ height: '140px', borderRadius: '8px' }} />
+                ) : payments.length === 0 ? (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No payment records found.</p>
+                ) : (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-secondary)', textAlign: 'left' }}>
-                        <th style={{ padding: '8px' }}>Order ID</th>
-                        <th style={{ padding: '8px' }}>Txn ID</th>
-                        <th style={{ padding: '8px' }}>Amount</th>
-                        <th style={{ padding: '8px' }}>Method</th>
-                        <th style={{ padding: '8px' }}>Status</th>
+                      <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                        <th style={{ padding: '10px' }}>Transaction ID</th>
+                        <th style={{ padding: '10px' }}>Order ID</th>
+                        <th style={{ padding: '10px' }}>User ID</th>
+                        <th style={{ padding: '10px' }}>Simulated Date</th>
+                        <th style={{ padding: '10px' }}>Amount</th>
+                        <th style={{ padding: '10px' }}>Method</th>
+                        <th style={{ padding: '10px' }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paymentsList.map(pay => (
-                        <tr key={pay.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                          <td style={{ padding: '8px' }}>Order #{pay.orderId}</td>
-                          <td style={{ padding: '8px', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{pay.transactionId}</td>
-                          <td style={{ padding: '8px', color: 'var(--accent-neon)' }}>${pay.amount.toFixed(2)}</td>
-                          <td style={{ padding: '8px', textTransform: 'lowercase' }}>{pay.paymentMethod}</td>
-                          <td style={{ padding: '8px' }}>
-                            <span className="badge badge-neon">{pay.status}</span>
-                          </td>
+                      {payments.map(p => (
+                        <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '12px 10px', color: 'var(--color-accent)', fontWeight: 'bold', fontFamily: 'monospace' }}>{p.transactionId}</td>
+                          <td style={{ padding: '12px 10px' }}>#{p.orderId}</td>
+                          <td style={{ padding: '12px 10px' }}>ID: {p.userId}</td>
+                          <td style={{ padding: '12px 10px' }}>{new Date(p.paymentDate).toLocaleString()}</td>
+                          <td style={{ padding: '12px 10px', color: 'var(--color-primary)', fontWeight: 'bold' }}>${p.amount.toFixed(2)}</td>
+                          <td style={{ padding: '12px 10px' }}>{p.paymentMethod}</td>
+                          <td style={{ padding: '12px 10px' }}><span style={{ color: p.status === 'SUCCESS' ? '#10b981' : '#ef4444', fontSize: '0.8rem', fontWeight: 'bold' }}>{p.status}</span></td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
+                )}
               </div>
+
             </div>
           </div>
         )}
       </main>
+
+      {/* Cart Sidebar drawer */}
+      <CartSidebar 
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cartItems={cartItems}
+        books={books}
+        onUpdateQuantity={handleUpdateCartQuantity}
+        onDeleteItem={handleDeleteCartItem}
+        onCheckout={() => {
+          setIsCartOpen(false);
+          setIsCheckoutOpen(true);
+        }}
+      />
+
+      {/* Checkout Wizard modal */}
+      <CheckoutModal 
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        cartItems={cartItems}
+        books={books}
+        onPlaceOrder={handlePlaceOrder}
+        currentUser={currentUser}
+      />
+
+      {/* Admin Add/Edit Catalog Book Modal */}
+      {isAdminBookFormOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0, right: 0, bottom: 0, left: 0,
+          backgroundColor: 'rgba(5, 7, 12, 0.85)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 1001,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '500px',
+            background: 'var(--bg-secondary)',
+            padding: '30px',
+            position: 'relative'
+          }}>
+            <button onClick={() => setIsAdminBookFormOpen(false)} className="btn-secondary" style={{ position: 'absolute', top: '20px', right: '20px', padding: '8px', borderRadius: '50%' }}>
+              <X size={16} />
+            </button>
+
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#fff', marginBottom: '20px' }}>
+              {editingBook ? 'Edit Book Details' : 'Add New Catalog Book'}
+            </h2>
+
+            <form onSubmit={handleSaveBook} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Book Title</label>
+                <input type="text" required value={bookFormTitle} onChange={(e) => setBookFormTitle(e.target.value)} placeholder="e.g. The Lord of the Rings" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Author Name</label>
+                <input type="text" required value={bookFormAuthor} onChange={(e) => setBookFormAuthor(e.target.value)} placeholder="e.g. J.R.R. Tolkien" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ISBN Code</label>
+                <input type="text" value={bookFormIsbn} onChange={(e) => setBookFormIsbn(e.target.value)} placeholder="e.g. 9780261102354" />
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Price ($)</label>
+                  <input type="number" step="0.01" required value={bookFormPrice} onChange={(e) => setBookFormPrice(e.target.value)} placeholder="e.g. 19.99" />
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Available Stock</label>
+                  <input type="number" required value={bookFormStock} onChange={(e) => setBookFormStock(e.target.value)} placeholder="e.g. 50" />
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Category Tag</label>
+                <select value={bookFormCategoryId} onChange={(e) => setBookFormCategoryId(e.target.value)}>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setIsAdminBookFormOpen(false)} className="btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" style={{ background: 'linear-gradient(135deg, var(--color-accent) 0%, #7209b7 100%)', color: '#fff' }}>
+                  Save Book
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Simple absolute positioned X icon helper close button for forms
+function X({ size }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
   );
 }

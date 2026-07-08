@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/api")
+@CrossOrigin
 public class BookController {
 
     private final BookService bookService;

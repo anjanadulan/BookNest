@@ -1,144 +1,110 @@
 import React from 'react';
-import { ShoppingCart, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Edit, Trash2 } from 'lucide-react';
 
-export default function BookCard({ book, onAddToCart, onEdit, onDelete, isAdmin }) {
+export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDelete }) {
   const isOutOfStock = book.stock <= 0;
-  const isLowStock = book.stock > 0 && book.stock < 10;
 
   return (
-    <div className="glass-panel animate-fade-in" style={{
-      padding: '20px',
+    <div className="glass-card" style={{
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
-      gap: '16px',
-      borderRadius: '16px',
+      padding: '20px',
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      height: '100%',
+      minHeight: '280px'
     }}>
-      {/* Glow highlight on top border */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '2px',
-        background: 'linear-gradient(90deg, transparent, var(--accent-purple), transparent)'
-      }} />
+      {/* Category Tag */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <span style={{
+          backgroundColor: 'rgba(99, 102, 241, 0.12)',
+          color: 'var(--color-secondary)',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          padding: '4px 10px',
+          borderRadius: '50px',
+          border: '1px solid rgba(99, 102, 241, 0.2)'
+        }}>
+          {book.category?.name || 'Uncategorized'}
+        </span>
+        <span style={{
+          fontSize: '0.8rem',
+          color: isOutOfStock ? '#ef4444' : 'var(--color-primary)',
+          fontWeight: 500
+        }}>
+          {isOutOfStock ? 'Out of Stock' : `${book.stock} left`}
+        </span>
+      </div>
 
       {/* Book details */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <span className="badge badge-purple">
-            {book.category ? book.category.name : 'Uncategorized'}
-          </span>
-          {isOutOfStock ? (
-            <span className="badge" style={{ backgroundColor: 'rgba(244, 63, 94, 0.15)', color: 'var(--accent-danger)', border: '1px solid rgba(244, 63, 94, 0.3)' }}>
-              Out of stock
-            </span>
-          ) : isLowStock ? (
-            <span className="badge" style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-              Low stock ({book.stock})
-            </span>
-          ) : (
-            <span className="badge badge-neon">
-              In Stock ({book.stock})
-            </span>
-          )}
-        </div>
-
+      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <h3 style={{
-          fontSize: '1.2rem',
-          color: 'var(--text-primary)',
-          marginBottom: '6px',
-          fontFamily: 'var(--font-title)',
+          fontSize: '1.25rem',
+          fontWeight: 700,
+          color: '#fff',
           lineHeight: '1.3'
         }}>
           {book.title}
         </h3>
-
-        <p style={{
-          fontSize: '0.85rem',
-          color: 'var(--text-secondary)',
-          marginBottom: '12px'
-        }}>
-          by <span style={{ color: 'var(--text-primary)' }}>{book.author}</span>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+          by <span style={{ color: '#d1d5db' }}>{book.author}</span>
         </p>
-
-        <div style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2px'
-        }}>
-          <span>ISBN: {book.isbn || 'N/A'}</span>
-        </div>
+        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+          ISBN: {book.isbn || 'N/A'}
+        </span>
       </div>
 
-      {/* Actions / Footer */}
+      {/* Price & Action row */}
       <div style={{
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        paddingTop: '12px',
-        marginTop: 'auto'
+        justifyContent: 'space-between',
+        marginTop: '20px',
+        paddingTop: '14px',
+        borderTop: '1px solid var(--glass-border)'
       }}>
-        {/* Price */}
-        <span style={{
-          fontSize: '1.35rem',
-          fontWeight: '700',
-          color: 'var(--accent-neon)',
-          fontFamily: 'var(--font-title)'
-        }}>
-          ${book.price ? book.price.toFixed(2) : '0.00'}
-        </span>
-
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {isAdmin ? (
-            <>
-              <button
-                onClick={() => onEdit(book)}
-                className="btn-secondary"
-                style={{ padding: '8px', borderRadius: '8px' }}
-                title="Edit Book"
-              >
-                <Edit size={16} />
-              </button>
-              <button
-                onClick={() => onDelete(book.id)}
-                className="btn-secondary"
-                style={{
-                  padding: '8px',
-                  borderRadius: '8px',
-                  borderColor: 'rgba(244,63,94,0.3)',
-                  color: 'var(--accent-danger)'
-                }}
-                title="Delete Book"
-              >
-                <Trash2 size={16} />
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => onAddToCart(book.id)}
-              disabled={isOutOfStock}
-              className="btn-primary"
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                opacity: isOutOfStock ? 0.5 : 1,
-                cursor: isOutOfStock ? 'not-allowed' : 'pointer'
-              }}
-            >
-              <ShoppingCart size={16} />
-              Add
-            </button>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Price</span>
+          <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+            ${book.price ? book.price.toFixed(2) : '0.00'}
+          </span>
         </div>
+
+        {/* Action Button */}
+        {currentUser.role === 'ADMIN' ? (
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button 
+              onClick={() => onEdit(book)} 
+              className="btn-secondary"
+              style={{ padding: '8px 12px', borderRadius: 'var(--border-radius-md)' }}
+            >
+              <Edit size={16} />
+            </button>
+            <button 
+              onClick={() => onDelete(book.id)} 
+              className="btn-danger"
+              style={{ padding: '8px 12px', borderRadius: 'var(--border-radius-md)' }}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onAddToCart(book.id)}
+            disabled={isOutOfStock}
+            className="btn-primary"
+            style={{
+              padding: '8px 14px',
+              opacity: isOutOfStock ? 0.5 : 1,
+              cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+              background: isOutOfStock ? 'var(--glass-border)' : undefined,
+              boxShadow: isOutOfStock ? 'none' : undefined
+            }}
+          >
+            <ShoppingCart size={16} /> Add
+          </button>
+        )}
       </div>
     </div>
   );
