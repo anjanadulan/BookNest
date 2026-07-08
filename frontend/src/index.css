@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #29221C;        /* Very dark volcanic stone base */
-  --bg-secondary: #4D3F33;      /* Volcanic Island - dark warm brown */
-  --glass-bg: rgba(77, 63, 51, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.05);
-  --glass-hover-border: rgba(255, 255, 255, 0.12);
+  --bg-primary: #5E1C23;        /* Red Oxide - rich burgundy base background */
+  --bg-secondary: #3B1015;      /* Deep burgundy black for cards and panels */
+  --glass-bg: rgba(59, 16, 21, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover-border: rgba(255, 255, 255, 0.18);
   
   --color-primary: #B1C7D4;     /* Cloudy Valley - light steel blue */
   --color-secondary: #849AAD;   /* Tsunami - slate steel blue */
-  --color-accent: #5E1C23;      /* Red Oxide - rich burgundy red */
+  --color-accent: #A1947F;      /* Weather Board - warm sand/grey */
   
   --text-main: #F1EDE7;         /* Warm cream off-white */
   --text-muted: #A1947F;        /* Weather Board - warm sand/grey */
-  --text-inverse: #29221C;      /* Dark brown base */
+  --text-inverse: #5E1C23;      /* Red Oxide base */
   
   --shadow-neon: 0 0 15px rgba(177, 199, 212, 0.2);
   --shadow-neon-hover: 0 0 25px rgba(177, 199, 212, 0.4);
-  --shadow-indigo: 0 0 15px rgba(94, 28, 35, 0.3);
+  --shadow-indigo: 0 0 15px rgba(255, 255, 255, 0.1);
   
   --font-main: 'Outfit', sans-serif;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

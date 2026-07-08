@@ -128,7 +128,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     <div style={{
       position: 'fixed',
       top: 0, right: 0, bottom: 0, left: 0,
-      backgroundColor: 'rgba(41, 34, 28, 0.85)', // 85% opacity of #29221C
+      backgroundColor: 'rgba(94, 28, 35, 0.85)', // 85% opacity of #5E1C23
       backdropFilter: 'blur(8px)',
       zIndex: 1002,
       display: 'flex',
