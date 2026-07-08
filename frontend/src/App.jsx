@@ -4,6 +4,7 @@ import BookCard from './components/BookCard';
 import CartSidebar from './components/CartSidebar';
 import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
+import UserProfile from './components/UserProfile';
 import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle, LogIn } from 'lucide-react';
 
 export default function App() {
@@ -44,6 +45,7 @@ export default function App() {
   const CART_API = 'http://localhost:8082/api';
   const ORDER_API = 'http://localhost:8083/api';
   const PAYMENT_API = 'http://localhost:8084/api';
+  const USER_API = 'http://localhost:8085/api/users';
 
   // Fetch initial books & categories
   const fetchCatalog = async () => {
@@ -67,6 +69,24 @@ export default function App() {
     } finally {
       setLoadingBooks(false);
     }
+  };
+
+  const handleUpdateProfile = async (updatedUserPayload) => {
+    try {
+      const res = await fetch(USER_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedUserPayload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUser(data);
+        return true;
+      }
+    } catch (e) {
+      console.error("Error updating profile: ", e);
+    }
+    return false;
   };
 
   // Fetch cart items for logged-in user
@@ -622,6 +642,14 @@ export default function App() {
 
             </div>
           </div>
+        )}
+
+        {/* TAB 3: User Profile Settings */}
+        {activeTab === 'profile' && currentUser && (
+          <UserProfile 
+            currentUser={currentUser}
+            onUpdateProfile={handleUpdateProfile}
+          />
         )}
       </main>
 

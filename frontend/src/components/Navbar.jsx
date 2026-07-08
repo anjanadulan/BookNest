@@ -63,6 +63,19 @@ export default function Navbar({ currentUser, onOpenAuth, onLogout, activeTab, o
             <ShieldAlert size={16} /> Admin Console
           </button>
         )}
+
+        {currentUser && (
+          <button
+            onClick={() => onChangeTab('profile')}
+            className="btn-secondary"
+            style={{
+              borderColor: activeTab === 'profile' ? 'var(--color-primary)' : 'transparent',
+              color: activeTab === 'profile' ? 'var(--color-primary)' : 'var(--text-muted)'
+            }}
+          >
+            Profile
+          </button>
+        )}
       </nav>
 
       {/* Action / User Session controls */}
