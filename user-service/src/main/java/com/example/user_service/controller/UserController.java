@@ -46,4 +46,9 @@ public class UserController {
     public List<User> getUsersByName(@RequestParam String name) {
         return userService.getUsersByName(name);
     }
+
+    @PutMapping(path = "/users", params = {"email", "password"})
+    public User changePasswordByEmail(@RequestParam String email, @RequestParam String password) {
+        return userService.changePasswordByEmail(email,password);
+    }
 }

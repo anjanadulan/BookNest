@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
-import { X, BookOpen, LogIn, UserPlus } from 'lucide-react';
+import { X, BookOpen, LogIn, UserPlus, KeyRound } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
   if (!isOpen) return null;
 
-  const [isLoginTab, setIsLoginTab] = useState(true);
+  const [activeView, setActiveView] = useState('login'); // 'login' | 'signup' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [name, setName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const USER_API = 'http://localhost:8085/api/users';
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       const res = await fetch(USER_API);
       if (!res.ok) throw new Error("Could not fetch user registry");
@@ -37,6 +40,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
   const handleSignUp = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       const checkRes = await fetch(USER_API);
       if (checkRes.ok) {
@@ -75,7 +79,51 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const res = await fetch(`${USER_API}?email=${encodeURIComponent(email)}&password=${encodeURIComponent(newPassword)}`, {
+        method: 'PUT'
+      });
+      
+      if (res.ok) {
+        setSuccessMsg('Password reset successful! Please sign in using your new password.');
+        setActiveView('login');
+        setPassword('');
+        setNewPassword('');
+      } else {
+        setErrorMsg('Password reset failed. Please ensure the email address is correct and registered.');
+      }
+    } catch (err) {
+      setErrorMsg('Failed to connect to authentication server: ' + err.message);
+    }
+  };
 
+  // Header content based on active view state
+  const getHeaderContent = () => {
+    switch (activeView) {
+      case 'signup':
+        return {
+          title: 'Create your account',
+          subtitle: 'Start shopping on BookNest by registering.'
+        };
+      case 'forgot':
+        return {
+          title: 'Reset password',
+          subtitle: 'Enter your email and new password to update your credentials.'
+        };
+      case 'login':
+      default:
+        return {
+          title: 'Sign in',
+          subtitle: 'Welcome back! Please enter your details.'
+        };
+    }
+  };
+
+  const { title, subtitle } = getHeaderContent();
 
   return (
     <div style={{
@@ -145,10 +193,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             color: '#fff',
             letterSpacing: '-0.5px'
           }}>
-            {isLoginTab ? 'Sign in' : 'Create your account'}
+            {title}
           </h2>
           <p style={{ fontSize: '0.85rem', color: '#a1a1aa' }}>
-            {isLoginTab ? 'Welcome back! Please enter your details.' : 'Start shopping on BookNest by registering.'}
+            {subtitle}
           </p>
         </div>
 
@@ -167,8 +215,23 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           </div>
         )}
 
+        {/* Success messaging */}
+        {successMsg && (
+          <div style={{
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            color: '#34d399',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            fontSize: '0.8rem',
+            fontWeight: 500
+          }}>
+            {successMsg}
+          </div>
+        )}
+
         {/* Auth Forms */}
-        {isLoginTab ? (
+        {activeView === 'login' && (
           /* Sign In Form */
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -191,9 +254,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Password</label>
-                <a href="#" onClick={(e) => { e.preventDefault(); alert("Credentials can be found in the README file."); }} style={{ fontSize: '0.8rem', color: '#fff', textDecoration: 'underline', fontWeight: 400 }}>
+                <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('forgot'); setErrorMsg(''); setSuccessMsg(''); }} style={{ fontSize: '0.8rem', color: '#fff', textDecoration: 'underline', fontWeight: 400 }}>
                   Forgot password?
                 </a>
               </div>
@@ -233,7 +296,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
               Continue
             </button>
           </form>
-        ) : (
+        )}
+
+        {activeView === 'signup' && (
           /* Sign Up Form */
           <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -314,7 +379,67 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           </form>
         )}
 
+        {activeView === 'forgot' && (
+          /* Password Reset Form */
+          <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Email address</label>
+              <input 
+                type="email" 
+                required 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="you@example.com" 
+                style={{
+                  background: '#18181b',
+                  border: '1px solid #27272a',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  padding: '10px 12px',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>New password</label>
+              <input 
+                type="password" 
+                required 
+                value={newPassword} 
+                onChange={(e) => setNewPassword(e.target.value)} 
+                placeholder="••••••••" 
+                style={{
+                  background: '#18181b',
+                  border: '1px solid #27272a',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  padding: '10px 12px',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
 
+            <button type="submit" style={{
+              background: '#ffffff',
+              color: '#09090b',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 500,
+              fontSize: '0.9rem',
+              padding: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              marginTop: '8px',
+              transition: 'opacity 0.2s'
+            }} onMouseEnter={(e) => e.target.style.opacity = '0.9'} onMouseLeave={(e) => e.target.style.opacity = '1'}>
+              <KeyRound size={16} /> Reset password
+            </button>
+          </form>
+        )}
 
         {/* Switch tab footer links */}
         <p style={{
@@ -322,17 +447,28 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           fontSize: '0.85rem',
           color: '#71717a'
         }}>
-          {isLoginTab ? (
+          {activeView === 'login' && (
             <>
               Don't have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setIsLoginTab(false); setErrorMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('signup'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
                 Sign up
               </a>
             </>
-          ) : (
+          )}
+
+          {activeView === 'signup' && (
             <>
               Already have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setIsLoginTab(true); setErrorMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+                Sign in
+              </a>
+            </>
+          )}
+
+          {activeView === 'forgot' && (
+            <>
+              Remembered your password?{' '}
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
                 Sign in
               </a>
             </>

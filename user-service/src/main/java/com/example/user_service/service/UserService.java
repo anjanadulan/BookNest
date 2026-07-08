@@ -38,4 +38,13 @@ public class UserService {
     public List<User> getUsersByName(String name) {
         return userRepository.getUsersByName(name);
     }
+
+    public User changePasswordByEmail(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        user.setPassword(password);
+
+        return userRepository.save(user);
+    }
 }
