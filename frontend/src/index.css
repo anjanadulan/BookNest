@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0b0f19;
-  --bg-secondary: #161e2f;
-  --glass-bg: rgba(22, 30, 47, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-border: rgba(255, 255, 255, 0.2);
+  --bg-primary: #0F172A;
+  --bg-secondary: #1E293B;
+  --glass-bg: rgba(30, 41, 59, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-hover-border: rgba(255, 255, 255, 0.15);
   
-  --color-primary: #00f5d4;     /* Neon Mint/Teal */
-  --color-secondary: #6366f1;   /* Electric Indigo */
-  --color-accent: #d946ef;      /* Pink */
+  --color-primary: #38BDF8;     /* Sky Blue */
+  --color-secondary: #A78BFA;   /* Lavender/Purple */
+  --color-accent: #A78BFA;      /* Lavender/Purple */
   
-  --text-main: #f3f4f6;
-  --text-muted: #9ca3af;
-  --text-inverse: #0b0f19;
+  --text-main: #F8FAFC;         /* Off-white */
+  --text-muted: #94A3B8;        /* Muted Slate */
+  --text-inverse: #0F172A;      /* Dark Slate */
   
-  --shadow-neon: 0 0 15px rgba(0, 245, 212, 0.2);
-  --shadow-neon-hover: 0 0 25px rgba(0, 245, 212, 0.45);
-  --shadow-indigo: 0 0 15px rgba(99, 102, 241, 0.2);
+  --shadow-neon: 0 0 15px rgba(56, 189, 248, 0.2);
+  --shadow-neon-hover: 0 0 25px rgba(56, 189, 248, 0.4);
+  --shadow-indigo: 0 0 15px rgba(167, 139, 250, 0.25);
   
   --font-main: 'Outfit', sans-serif;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

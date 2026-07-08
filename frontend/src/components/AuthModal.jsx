@@ -101,7 +101,6 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  // Header content based on active view state
   const getHeaderContent = () => {
     switch (activeView) {
       case 'signup':
@@ -129,7 +128,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     <div style={{
       position: 'fixed',
       top: 0, right: 0, bottom: 0, left: 0,
-      backgroundColor: 'rgba(9, 9, 11, 0.85)',
+      backgroundColor: 'rgba(15, 23, 42, 0.85)', // 85% opacity of #0F172A
       backdropFilter: 'blur(8px)',
       zIndex: 1002,
       display: 'flex',
@@ -141,15 +140,15 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
       <div style={{
         width: '100%',
         maxWidth: '400px',
-        backgroundColor: '#09090b',
-        border: '1px solid #27272a',
+        backgroundColor: 'var(--bg-secondary)',
+        border: '1px solid var(--glass-border)',
         borderRadius: '12px',
         padding: '40px 32px',
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)'
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
       }}>
         {/* Close Button */}
         <button onClick={onClose} style={{
@@ -158,31 +157,31 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           right: '20px',
           background: 'transparent',
           border: 'none',
-          color: '#a1a1aa',
+          color: 'var(--text-muted)',
           cursor: 'pointer',
           padding: '6px',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s'
-        }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = '#a1a1aa'}>
+          transition: 'var(--transition-smooth)'
+        }} onMouseEnter={(e) => e.target.style.color = 'var(--text-main)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>
           <X size={16} />
         </button>
 
         {/* AuthKit Minimal Logo */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <div style={{
-            background: '#ffffff',
+            background: 'var(--text-main)',
             borderRadius: '6px',
             padding: '6px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <BookOpen size={16} color="#09090b" />
+            <BookOpen size={16} color="var(--bg-primary)" />
           </div>
-          <span style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>BookNest</span>
+          <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>BookNest</span>
         </div>
 
         {/* Title Header */}
@@ -190,12 +189,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           <h2 style={{
             fontSize: '1.5rem',
             fontWeight: 600,
-            color: '#fff',
+            color: 'var(--text-main)',
             letterSpacing: '-0.5px'
           }}>
             {title}
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#a1a1aa' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
             {subtitle}
           </p>
         </div>
@@ -235,7 +234,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           /* Sign In Form */
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Email address</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Email address</label>
               <input 
                 type="email" 
                 required 
@@ -243,10 +242,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="you@example.com" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -255,8 +254,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Password</label>
-                <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('forgot'); setErrorMsg(''); setSuccessMsg(''); }} style={{ fontSize: '0.8rem', color: '#fff', textDecoration: 'underline', fontWeight: 400 }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Password</label>
+                <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('forgot'); setErrorMsg(''); setSuccessMsg(''); }} style={{ fontSize: '0.8rem', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 500 }}>
                   Forgot password?
                 </a>
               </div>
@@ -267,10 +266,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="••••••••" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -278,11 +277,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
 
             <button type="submit" style={{
-              background: '#ffffff',
-              color: '#09090b',
+              background: 'var(--color-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '6px',
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: '0.9rem',
               padding: '12px',
               cursor: 'pointer',
@@ -302,7 +301,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           /* Sign Up Form */
           <form onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Full name</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Full name</label>
               <input 
                 type="text" 
                 required 
@@ -310,10 +309,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setName(e.target.value)} 
                 placeholder="Name" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -321,7 +320,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Email address</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Email address</label>
               <input 
                 type="email" 
                 required 
@@ -329,10 +328,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="you@example.com" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -340,7 +339,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Password</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Password</label>
               <input 
                 type="password" 
                 required 
@@ -348,10 +347,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="••••••••" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -359,11 +358,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
 
             <button type="submit" style={{
-              background: '#ffffff',
-              color: '#09090b',
+              background: 'var(--color-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '6px',
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: '0.9rem',
               padding: '12px',
               cursor: 'pointer',
@@ -383,7 +382,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           /* Password Reset Form */
           <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>Email address</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>Email address</label>
               <input 
                 type="email" 
                 required 
@@ -391,10 +390,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setEmail(e.target.value)} 
                 placeholder="you@example.com" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -402,7 +401,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: '#e4e4e7' }}>New password</label>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-muted)' }}>New password</label>
               <input 
                 type="password" 
                 required 
@@ -410,10 +409,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
                 onChange={(e) => setNewPassword(e.target.value)} 
                 placeholder="••••••••" 
                 style={{
-                  background: '#18181b',
-                  border: '1px solid #27272a',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '6px',
-                  color: '#fff',
+                  color: 'var(--text-main)',
                   padding: '10px 12px',
                   fontSize: '0.9rem'
                 }}
@@ -421,11 +420,11 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
 
             <button type="submit" style={{
-              background: '#ffffff',
-              color: '#09090b',
+              background: 'var(--color-primary)',
+              color: 'var(--bg-primary)',
               border: 'none',
               borderRadius: '6px',
-              fontWeight: 500,
+              fontWeight: 600,
               fontSize: '0.9rem',
               padding: '12px',
               cursor: 'pointer',
@@ -445,12 +444,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
         <p style={{
           textAlign: 'center',
           fontSize: '0.85rem',
-          color: '#71717a'
+          color: 'var(--text-muted)'
         }}>
           {activeView === 'login' && (
             <>
               Don't have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('signup'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('signup'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}>
                 Sign up
               </a>
             </>
@@ -459,7 +458,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           {activeView === 'signup' && (
             <>
               Already have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}>
                 Sign in
               </a>
             </>
@@ -468,7 +467,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           {activeView === 'forgot' && (
             <>
               Remembered your password?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: '#fff', textDecoration: 'underline', fontWeight: 500 }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('login'); setErrorMsg(''); setSuccessMsg(''); }} style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}>
                 Sign in
               </a>
             </>
