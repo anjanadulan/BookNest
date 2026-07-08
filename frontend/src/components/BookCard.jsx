@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Edit, Trash2, BookOpen } from 'lucide-react';
 
-export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDelete }) {
+export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDelete, onSelectBook }) {
   const isOutOfStock = book.stock <= 0;
   const [imgError, setImgError] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
@@ -9,7 +9,7 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
   const showPlaceholder = !book.coverUrl || imgError;
 
   return (
-    <div className="glass-card" style={{
+    <div className="glass-card" onClick={() => onSelectBook(book)} style={{
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -17,7 +17,8 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
       position: 'relative',
       overflow: 'hidden',
       height: '100%',
-      minHeight: '440px'
+      minHeight: '440px',
+      cursor: 'pointer'
     }}>
       {/* Category Tag */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -165,14 +166,14 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
         {currentUser.role === 'ADMIN' ? (
           <div style={{ display: 'flex', gap: '6px' }}>
             <button 
-              onClick={() => onEdit(book)} 
+              onClick={(e) => { e.stopPropagation(); onEdit(book); }} 
               className="btn-secondary"
               style={{ padding: '8px 12px', borderRadius: 'var(--border-radius-md)' }}
             >
               <Edit size={16} />
             </button>
             <button 
-              onClick={() => onDelete(book.id)} 
+              onClick={(e) => { e.stopPropagation(); onDelete(book.id); }} 
               className="btn-danger"
               style={{ padding: '8px 12px', borderRadius: 'var(--border-radius-md)' }}
             >
@@ -181,7 +182,7 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
           </div>
         ) : (
           <button
-            onClick={() => onAddToCart(book.id)}
+            onClick={(e) => { e.stopPropagation(); onAddToCart(book.id); }}
             disabled={isOutOfStock}
             className="btn-primary"
             style={{

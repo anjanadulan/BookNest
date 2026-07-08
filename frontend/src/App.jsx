@@ -5,6 +5,7 @@ import CartSidebar from './components/CartSidebar';
 import CheckoutModal from './components/CheckoutModal';
 import AuthModal from './components/AuthModal';
 import UserProfile from './components/UserProfile';
+import BookDetailModal from './components/BookDetailModal';
 import { Search, Plus, RefreshCw, Layers, ShieldAlert, CreditCard, UserCheck, AlertCircle, LogIn } from 'lucide-react';
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
   const [bookFormCategoryId, setBookFormCategoryId] = useState('');
   const [bookFormCoverUrl, setBookFormCoverUrl] = useState('');
   const [bookFormDescription, setBookFormDescription] = useState('');
+  const [selectedDetailBook, setSelectedDetailBook] = useState(null);
 
   // Port Mappings
   const BOOK_API = 'http://localhost:8081/api';
@@ -546,6 +548,7 @@ export default function App() {
                     onAddToCart={handleAddToCart}
                     onEdit={handleOpenEditBook}
                     onDelete={handleDeleteBook}
+                    onSelectBook={setSelectedDetailBook}
                   />
                 ))}
               </div>
@@ -719,6 +722,15 @@ export default function App() {
           setPendingCheckout(false);
         }}
         onLoginSuccess={handleLoginSuccess}
+      />
+
+      {/* Book Details Preview Modal */}
+      <BookDetailModal 
+        book={selectedDetailBook}
+        isOpen={selectedDetailBook !== null}
+        onClose={() => setSelectedDetailBook(null)}
+        onAddToCart={handleAddToCart}
+        currentUser={currentUser || { role: 'CUSTOMER' }}
       />
 
       {/* Admin Add/Edit Catalog Book Modal */}
