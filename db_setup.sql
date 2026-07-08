@@ -77,24 +77,12 @@ CREATE TABLE IF NOT EXISTS books
 (
     255
 ) NOT NULL,
-    isbn VARCHAR
-(
-    50
-),
-    price DECIMAL
-(
-    10,
-    2
-) NOT NULL,
+    isbn VARCHAR(50),
+    price DECIMAL(10, 2) NOT NULL,
     stock INT NOT NULL,
+    cover_url VARCHAR(500) DEFAULT NULL,
     category_id INT,
-    FOREIGN KEY
-(
-    category_id
-) REFERENCES categories
-(
-    id
-) ON DELETE SET NULL
+    FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL
     );
 
 INSERT INTO categories (id, name)
@@ -104,12 +92,12 @@ VALUES (1, 'Fiction'),
        (4, 'Biography') ON DUPLICATE KEY
 UPDATE name= name;
 
-INSERT INTO books (title, author, isbn, price, stock, category_id)
-VALUES ('The Great Gatsby', 'F. Scott Fitzgerald', '9780743273565', 15.99, 100, 1),
-       ('To Kill a Mockingbird', 'Harper Lee', '9780446310789', 12.50, 80, 1),
-       ('A Brief History of Time', 'Stephen Hawking', '9780553380163', 18.99, 50, 2),
-       ('Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', '9780062316097', 22.00, 60, 3),
-       ('Steve Jobs', 'Walter Isaacson', '9781451648539', 24.99, 40, 4) ON DUPLICATE KEY
+INSERT INTO books (title, author, isbn, price, stock, cover_url, category_id)
+VALUES ('The Great Gatsby', 'F. Scott Fitzgerald', '9780743273565', 15.99, 100, 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=400&q=80', 1),
+       ('To Kill a Mockingbird', 'Harper Lee', '9780446310789', 12.50, 80, 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=400&q=80', 1),
+       ('A Brief History of Time', 'Stephen Hawking', '9780553380163', 18.99, 50, 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=80', 2),
+       ('Sapiens: A Brief History of Humankind', 'Yuval Noah Harari', '9780062316097', 22.00, 60, 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=400&q=80', 3),
+       ('Steve Jobs', 'Walter Isaacson', '9781451648539', 24.99, 40, 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=400&q=80', 4) ON DUPLICATE KEY
 UPDATE isbn=isbn;
 
 

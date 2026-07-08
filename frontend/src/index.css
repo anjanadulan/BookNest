@@ -1,19 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #5E1C23;        /* Red Oxide - rich burgundy base background */
-  --bg-secondary: #3B1015;      /* Deep burgundy black for cards and panels */
-  --glass-bg: rgba(59, 16, 21, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --bg-primary: #160103;        /* Red Oxide - rich burgundy base background */
+  --bg-secondary: #240408;      /* Deep burgundy black for cards and panels */
+  --glass-bg: rgba(50, 0, 6, 0.8);
+  --glass-border: rgb(70, 2, 2);
   --glass-hover-border: rgba(255, 255, 255, 0.18);
   
-  --color-primary: #B1C7D4;     /* Cloudy Valley - light steel blue */
+  --color-primary: #6f9597;     /* Cloudy Valley - light steel blue */
   --color-secondary: #849AAD;   /* Tsunami - slate steel blue */
   --color-accent: #A1947F;      /* Weather Board - warm sand/grey */
   
   --text-main: #F1EDE7;         /* Warm cream off-white */
   --text-muted: #A1947F;        /* Weather Board - warm sand/grey */
-  --text-inverse: #5E1C23;      /* Red Oxide base */
+  --text-inverse: #6f3339;      /* Red Oxide base */
   
   --shadow-neon: 0 0 15px rgba(177, 199, 212, 0.2);
   --shadow-neon-hover: 0 0 25px rgba(177, 199, 212, 0.4);
@@ -92,7 +92,7 @@ input:focus, select:focus, textarea:focus {
 
 /* Primary Button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-primary) 0%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #ff7474 100%);
   border: none;
   border-radius: var(--border-radius-md);
   color: var(--text-inverse);

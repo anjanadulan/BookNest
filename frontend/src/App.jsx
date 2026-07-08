@@ -45,6 +45,7 @@ export default function App() {
   const [bookFormPrice, setBookFormPrice] = useState('');
   const [bookFormStock, setBookFormStock] = useState('');
   const [bookFormCategoryId, setBookFormCategoryId] = useState('');
+  const [bookFormCoverUrl, setBookFormCoverUrl] = useState('');
 
   // Port Mappings
   const BOOK_API = 'http://localhost:8081/api';
@@ -388,6 +389,7 @@ export default function App() {
     setBookFormIsbn('');
     setBookFormPrice('');
     setBookFormStock('');
+    setBookFormCoverUrl('');
     setBookFormCategoryId(categories[0]?.id || 1);
     setIsAdminBookFormOpen(true);
   };
@@ -399,6 +401,7 @@ export default function App() {
     setBookFormIsbn(book.isbn || '');
     setBookFormPrice(book.price.toString());
     setBookFormStock(book.stock.toString());
+    setBookFormCoverUrl(book.coverUrl || '');
     setBookFormCategoryId(book.category?.id || 1);
     setIsAdminBookFormOpen(true);
   };
@@ -425,6 +428,7 @@ export default function App() {
       isbn: bookFormIsbn,
       price: parseFloat(bookFormPrice),
       stock: parseInt(bookFormStock),
+      coverUrl: bookFormCoverUrl,
       category: {
         id: parseInt(bookFormCategoryId)
       }
@@ -753,6 +757,10 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>ISBN Code</label>
                 <input type="text" value={bookFormIsbn} onChange={(e) => setBookFormIsbn(e.target.value)} placeholder="e.g. 9780261102354" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>Cover Image URL</label>
+                <input type="text" value={bookFormCoverUrl} onChange={(e) => setBookFormCoverUrl(e.target.value)} placeholder="e.g. https://images.unsplash.com/photo-..." />
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>

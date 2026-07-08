@@ -1,8 +1,11 @@
-import React from 'react';
-import { ShoppingCart, Edit, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingCart, Edit, Trash2, BookOpen } from 'lucide-react';
 
 export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDelete }) {
   const isOutOfStock = book.stock <= 0;
+  const [imgError, setImgError] = useState(false);
+
+  const showPlaceholder = !book.coverUrl || imgError;
 
   return (
     <div className="glass-card" style={{
@@ -13,7 +16,7 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
       position: 'relative',
       overflow: 'hidden',
       height: '100%',
-      minHeight: '280px'
+      minHeight: '440px'
     }}>
       {/* Category Tag */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -37,20 +40,77 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
         </span>
       </div>
 
+      {/* Book Cover Preview Container */}
+      <div style={{
+        height: '180px',
+        borderRadius: '8px',
+        background: 'var(--bg-primary)',
+        border: '1px solid var(--glass-border)',
+        overflow: 'hidden',
+        marginBottom: '14px',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {showPlaceholder ? (
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(135deg, var(--bg-secondary) 0%, rgba(94, 28, 35, 0.4) 100%)',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            textAlign: 'center'
+          }}>
+            <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '1px', fontWeight: 600 }}>BookNest Edition</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: '1.2' }}>{book.title}</h4>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{book.author}</span>
+            </div>
+            <span style={{
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '50%',
+              padding: '6px',
+              background: 'rgba(255,255,255,0.02)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <BookOpen size={12} color="var(--color-primary)" />
+            </span>
+          </div>
+        ) : (
+          <img 
+            src={book.coverUrl} 
+            alt={book.title} 
+            onError={() => setImgError(true)}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              transition: 'transform 0.3s'
+            }} 
+          />
+        )}
+      </div>
+
       {/* Book details */}
       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <h3 style={{
-          fontSize: '1.25rem',
+          fontSize: '1.15rem',
           fontWeight: 700,
           color: '#fff',
           lineHeight: '1.3'
         }}>
           {book.title}
         </h3>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
           by <span style={{ color: '#d1d5db' }}>{book.author}</span>
         </p>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
           ISBN: {book.isbn || 'N/A'}
         </span>
       </div>
@@ -60,13 +120,13 @@ export default function BookCard({ book, currentUser, onAddToCart, onEdit, onDel
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '20px',
-        paddingTop: '14px',
+        marginTop: '16px',
+        paddingTop: '12px',
         borderTop: '1px solid var(--glass-border)'
       }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Price</span>
-          <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--color-primary)' }}>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-primary)' }}>
             ${book.price ? book.price.toFixed(2) : '0.00'}
           </span>
         </div>
