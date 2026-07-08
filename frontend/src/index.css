@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0F172A;
-  --bg-secondary: #1E293B;
-  --glass-bg: rgba(30, 41, 59, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --glass-hover-border: rgba(255, 255, 255, 0.15);
+  --bg-primary: #29221C;        /* Very dark volcanic stone base */
+  --bg-secondary: #4D3F33;      /* Volcanic Island - dark warm brown */
+  --glass-bg: rgba(77, 63, 51, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-hover-border: rgba(255, 255, 255, 0.12);
   
-  --color-primary: #38BDF8;     /* Sky Blue */
-  --color-secondary: #A78BFA;   /* Lavender/Purple */
-  --color-accent: #A78BFA;      /* Lavender/Purple */
+  --color-primary: #B1C7D4;     /* Cloudy Valley - light steel blue */
+  --color-secondary: #849AAD;   /* Tsunami - slate steel blue */
+  --color-accent: #5E1C23;      /* Red Oxide - rich burgundy red */
   
-  --text-main: #F8FAFC;         /* Off-white */
-  --text-muted: #94A3B8;        /* Muted Slate */
-  --text-inverse: #0F172A;      /* Dark Slate */
+  --text-main: #F1EDE7;         /* Warm cream off-white */
+  --text-muted: #A1947F;        /* Weather Board - warm sand/grey */
+  --text-inverse: #29221C;      /* Dark brown base */
   
-  --shadow-neon: 0 0 15px rgba(56, 189, 248, 0.2);
-  --shadow-neon-hover: 0 0 25px rgba(56, 189, 248, 0.4);
-  --shadow-indigo: 0 0 15px rgba(167, 139, 250, 0.25);
+  --shadow-neon: 0 0 15px rgba(177, 199, 212, 0.2);
+  --shadow-neon-hover: 0 0 25px rgba(177, 199, 212, 0.4);
+  --shadow-indigo: 0 0 15px rgba(94, 28, 35, 0.3);
   
   --font-main: 'Outfit', sans-serif;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
