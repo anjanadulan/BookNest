@@ -75,18 +75,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  // Custom SVGs matching the monochromatic AuthKit style
-  const GoogleIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" style={{ marginRight: '10px' }}>
-      <path fill="#ffffff" d="M12.24 10.285V13.4h6.887c-.279 1.56-1.602 4.585-6.887 4.585-4.57 0-8.293-3.785-8.293-8.457S7.67 1.07 12.24 1.07c2.6 0 4.34 1.085 5.335 2.045l2.465-2.37C18.465.735 15.615 0 12.24 0 5.58 0 0 5.37 0 12s5.58 12 12.24 12c6.96 0 11.57-4.89 11.57-11.79 0-.795-.085-1.4-.195-1.925H12.24z"/>
-    </svg>
-  );
 
-  const FacebookIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" style={{ marginRight: '10px' }}>
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
 
   return (
     <div style={{
@@ -325,62 +314,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
           </form>
         )}
 
-        {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0' }}>
-          <div style={{ flexGrow: 1, height: '1px', background: '#27272a' }}></div>
-          <span style={{ padding: '0 12px', color: '#71717a', fontSize: '0.75rem' }}>or</span>
-          <div style={{ flexGrow: 1, height: '1px', background: '#27272a' }}></div>
-        </div>
 
-        {/* Social Authentication buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button 
-            type="button" 
-            onClick={() => alert("Simulating Google OAuth connection.")}
-            style={{
-              width: '100%',
-              background: 'transparent',
-              border: '1px solid #27272a',
-              borderRadius: '6px',
-              color: '#fff',
-              padding: '10px',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#18181b'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <GoogleIcon /> Continue with Google
-          </button>
-          <button 
-            type="button" 
-            onClick={() => alert("Simulating Facebook OAuth connection.")}
-            style={{
-              width: '100%',
-              background: 'transparent',
-              border: '1px solid #27272a',
-              borderRadius: '6px',
-              color: '#fff',
-              padding: '10px',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#18181b'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          >
-            <FacebookIcon /> Continue with Facebook
-          </button>
-        </div>
 
         {/* Switch tab footer links */}
         <p style={{
