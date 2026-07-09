@@ -723,6 +723,7 @@ export default function App() {
           <UserProfile 
             currentUser={currentUser}
             onUpdateProfile={handleUpdateProfile}
+            books={books}
           />
         )}
       </main>
