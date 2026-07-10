@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { accentBorders, categories, type Book } from "@/data/books"
-import { createCartItem, createOrder, createPayment, deleteCartItem, fetchCart, fetchOrders, type ApiOrder, updateCartItem } from "@/lib/api"
+import { createCartItem, createOrder, createPayment, deleteCartItem, deleteOrder, deletePayment, fetchBooks, fetchCart, fetchOrders, releaseBookStock, reserveBookStock, type ApiOrder, updateCartItem, updateOrder, updateUserProfile } from "@/lib/api"
 import { AuthPage, type AuthProfile } from "@/pages/AuthPage"
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage"
 import { BookDetailsPage } from "@/pages/BookDetailsPage"
@@ -58,7 +58,7 @@ function mapApiOrder(order: ApiOrder): OrderRecord {
 function App() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { books } = useBookStore()
+  const { books, refreshBooks } = useBookStore()
   const [activeCategory, setActiveCategory] = useState("All books")
   const [query, setQuery] = useState("")
   const [cartItems, setCartItems] = useState<CartLine[]>([])
@@ -239,7 +239,7 @@ function App() {
 
   function saveProfile(profile: AuthProfile) {
     setUser((current) => ({ ...profile, role: current?.role ?? profile.role }))
-    if (profile.id) void updateUser({ id: profile.id, name: profile.name, email: profile.email, role: profile.role ?? "CUSTOMER" })
+    if (profile.id) void updateUserProfile({ id: profile.id, name: profile.name, email: profile.email })
   }
 
   function continueToPayment(details: CheckoutDetails) {
@@ -251,21 +251,52 @@ function App() {
   async function completePayment(payment: PaymentResult) {
     if (!user?.id) throw new Error("Please sign in before completing payment")
 
-    const total = cartItems.reduce((sum, item) => {
-      const book = books.find((candidate) => candidate.id === item.bookId)
-      return sum + (book?.price ?? 0) * item.quantity
-    }, 0)
+    if (cartItems.length === 0) throw new Error("Your cart is empty")
 
+    const latestBooks = await fetchBooks()
+    const latestById = new Map(latestBooks.map((book) => [book.id, book]))
+    const orderItems = cartItems.map((item) => {
+      const book = latestById.get(item.bookId)
+      if (!book) throw new Error(`Book ${item.bookId} is no longer available`)
+      if (book.stock < item.quantity) throw new Error(`Only ${book.stock} copy${book.stock === 1 ? "" : "ies"} of “${book.title}” remain`)
+      return { bookId: item.bookId, quantity: item.quantity, price: book.price }
+    })
+    const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
     const now = new Date().toISOString().slice(0, 19)
-    const createdOrder = await createOrder({ userId: user.id, totalAmount: total, status: "COMPLETED", orderDate: now, orderItems: cartItems.map((item) => ({ bookId: item.bookId, quantity: item.quantity, price: books.find((book) => book.id === item.bookId)?.price ?? 0 })) })
-    const transactionId = `TXN-${Date.now().toString().slice(-8)}-MOCK`
-    await createPayment({ orderId: createdOrder.id, userId: user.id, amount: total, paymentMethod: payment.paymentMethod, status: "SUCCESS", transactionId, paymentDate: now })
-    await Promise.all(cartItems.filter((item) => item.id).map((item) => deleteCartItem(item.id as number)))
-    setOrders((current) => [{ id: `BN-${createdOrder.id}`, date: now.slice(0, 10), total, status: "Completed", items: cartItems, paymentMethod: payment.paymentMethod === "CREDIT_CARD" ? `Card ending ${payment.lastFour}` : payment.paymentMethod, transactionId }, ...current])
-    setCartItems([])
-    setCheckoutDetails(null)
-    navigate("/orders")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    const reservedItems: typeof cartItems = []
+    let createdOrder: ApiOrder | undefined
+    let createdPayment: Awaited<ReturnType<typeof createPayment>> | undefined
+
+    try {
+      for (const item of cartItems) {
+        await reserveBookStock(item.bookId, item.quantity)
+        reservedItems.push(item)
+      }
+
+      createdOrder = await createOrder({ userId: user.id, totalAmount: total, status: "PENDING", orderDate: now, orderItems })
+      const transactionId = `TXN-${Date.now().toString().slice(-8)}-MOCK`
+      createdPayment = await createPayment({ orderId: createdOrder.id, userId: user.id, amount: total, paymentMethod: payment.paymentMethod, status: "SUCCESS", transactionId, paymentDate: now })
+      await updateOrder({ ...createdOrder, status: "COMPLETED", orderItems: createdOrder.orderItems ?? orderItems })
+      await Promise.all(cartItems.filter((item) => item.id).map((item) => deleteCartItem(item.id as number)))
+      setOrders((current) => [{ id: `BN-${createdOrder?.id}`, date: now.slice(0, 10), total, status: "Completed", items: cartItems, paymentMethod: payment.paymentMethod === "CREDIT_CARD" ? `Card ending ${payment.lastFour}` : payment.paymentMethod, transactionId }, ...current])
+      setCartItems([])
+      setCheckoutDetails(null)
+      await refreshBooks()
+      navigate("/orders")
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } catch (checkoutError) {
+      if (createdPayment?.id) {
+        try { await deletePayment(createdPayment.id) } catch { /* best-effort compensation */ }
+      }
+      if (createdOrder?.id) {
+        try { await updateOrder({ ...createdOrder, status: "FAILED", orderItems: createdOrder.orderItems ?? orderItems }) } catch {
+          try { await deleteOrder(createdOrder.id) } catch { /* keep the failed order for manual review */ }
+        }
+      }
+      await Promise.all(reservedItems.map((item) => releaseBookStock(item.bookId, item.quantity).catch(() => undefined)))
+      await refreshBooks()
+      throw checkoutError
+    }
   }
 
   return (

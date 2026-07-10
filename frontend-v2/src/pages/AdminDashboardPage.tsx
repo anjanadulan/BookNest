@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { createBook, deleteBook, updateBook } from "@/lib/api"
+import { createBook, deleteBook, fetchAllOrders, fetchPayments, fetchUsers, updateBook, type ApiOrder, type ApiPayment } from "@/lib/api"
 import type { Book } from "@/data/books"
 import type { OrderRecord } from "@/pages/OrderHistoryPage"
 import { useBookStore } from "@/state/book-store"
@@ -30,9 +30,9 @@ type AdminDashboardPageProps = {
   onOpenStore: () => void
 }
 
-type DashboardTab = "overview" | "inventory" | "orders" | "users"
+type DashboardTab = "overview" | "inventory" | "orders" | "users" | "payments"
 
-const users = [
+const fallbackUsers = [
   {
     name: "John Doe",
     email: "john@gmail.com",
@@ -76,6 +76,10 @@ function formFromBook(book: Book): BookFormState {
   return { title: book.title, author: book.author, category: book.category, isbn: book.isbn ?? "", price: String(book.price), stock: String(book.stock), coverUrl: book.cover, description: book.description }
 }
 
+function mapAdminOrder(order: ApiOrder): OrderRecord {
+  return { id: `BN-${order.id}`, date: order.orderDate.slice(0, 10), total: Number(order.totalAmount), status: order.status.toUpperCase() === "COMPLETED" ? "Completed" : "Processing", items: (order.orderItems ?? []).map((item) => ({ bookId: item.bookId, quantity: item.quantity })), paymentMethod: "Card", transactionId: "" }
+}
+
 export function AdminDashboardPage({
   orders,
   onBack,
@@ -84,10 +88,31 @@ export function AdminDashboardPage({
   const { books, refreshBooks } = useBookStore()
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview")
   const [inventoryQuery, setInventoryQuery] = useState("")
+  const [adminUsers, setAdminUsers] = useState(fallbackUsers)
+  const [adminOrders, setAdminOrders] = useState<OrderRecord[]>(orders)
+  const [payments, setPayments] = useState<ApiPayment[]>([])
+  const [adminDataError, setAdminDataError] = useState<string | null>(null)
   const [bookForm, setBookForm] = useState<BookFormState | null>(null)
   const [editingBookId, setEditingBookId] = useState<number | null>(null)
   const [isSavingBook, setIsSavingBook] = useState(false)
   const [bookFormError, setBookFormError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void Promise.all([fetchUsers(), fetchAllOrders(), fetchPayments()])
+        .then(([remoteUsers, remoteOrders, remotePayments]) => {
+          setAdminUsers(remoteUsers.map((user) => ({ name: user.name, email: user.email, role: user.role, joined: "Remote account", status: "Active" })))
+          setAdminOrders(remoteOrders.map(mapAdminOrder))
+          setPayments(remotePayments)
+          setAdminDataError(null)
+        })
+        .catch((requestError: unknown) => {
+          setAdminDataError(requestError instanceof Error ? requestError.message : "Admin services unavailable")
+        })
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [orders])
 
   const filteredBooks = useMemo(() => {
     const query = inventoryQuery.trim().toLowerCase()
@@ -100,8 +125,8 @@ export function AdminDashboardPage({
   }, [books, inventoryQuery])
 
   const recentOrders =
-    orders.length > 0
-      ? orders
+    adminOrders.length > 0
+      ? adminOrders
       : [
           {
             id: "BN-1024",
@@ -123,6 +148,7 @@ export function AdminDashboardPage({
     { id: "inventory", label: "Inventory", icon: Boxes },
     { id: "orders", label: "Orders", icon: ShoppingBag },
     { id: "users", label: "Users", icon: Users },
+    { id: "payments", label: "Payments", icon: CircleDollarSign },
   ]
 
   function openCreateBook() {
@@ -306,6 +332,7 @@ export function AdminDashboardPage({
             </Button>
           ))}
         </div>
+        {adminDataError && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs text-coral">Some admin data could not be loaded: {adminDataError}</p>}
 
         {activeTab === "overview" && (
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_.7fr]">
@@ -602,11 +629,11 @@ export function AdminDashboardPage({
                 </h2>
               </div>
               <span className="font-mono text-[9px] tracking-[.08em] text-dim uppercase">
-                {users.length} accounts
+                {adminUsers.length} accounts
               </span>
             </div>
             <div className="mt-8 divide-y divide-line">
-              {users.map((reader) => (
+              {adminUsers.map((reader) => (
                 <div
                   className="flex flex-col justify-between gap-4 py-5 first:pt-0 sm:flex-row sm:items-center"
                   key={reader.email}
@@ -639,6 +666,13 @@ export function AdminDashboardPage({
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {activeTab === "payments" && (
+          <section className="mt-10 border border-line bg-surface p-5 md:p-7">
+            <div className="flex items-end justify-between"><div><span className="font-mono text-[9px] tracking-[.1em] text-dim uppercase">Payment ledger</span><h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">Money, reconciled.</h2></div><span className="font-mono text-[9px] tracking-[.08em] text-dim uppercase">{payments.length} transactions</span></div>
+            <div className="mt-8 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-xs"><thead className="border-b border-line font-mono text-[9px] tracking-[.08em] text-dim uppercase"><tr><th className="pb-4 font-normal">Transaction</th><th className="pb-4 font-normal">Order</th><th className="pb-4 font-normal">Method</th><th className="pb-4 font-normal">Amount</th><th className="pb-4 font-normal">Status</th><th className="pb-4 font-normal">Date</th></tr></thead><tbody className="divide-y divide-line">{payments.map((payment) => <tr key={payment.id ?? payment.transactionId}><td className="py-5 font-mono text-[10px]">{payment.transactionId}</td><td className="py-5 text-muted">#{payment.orderId}</td><td className="py-5 text-muted">{payment.paymentMethod}</td><td className="py-5 font-medium">${Number(payment.amount).toFixed(2)}</td><td className="py-5"><Badge className={`rounded-full border-0 px-2.5 py-1 font-mono text-[8px] font-normal tracking-[.08em] uppercase ${payment.status.toUpperCase() === "SUCCESS" ? "bg-lime/10 text-lime" : "bg-coral/10 text-coral"}`}>{payment.status}</Badge></td><td className="py-5 text-muted">{payment.paymentDate.slice(0, 10)}</td></tr>)}</tbody></table>{payments.length === 0 && <p className="py-10 text-center text-sm text-muted">No payment records returned by payment-service.</p>}</div>
           </section>
         )}
 
