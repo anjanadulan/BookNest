@@ -47,4 +47,10 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    public User authenticate(String email, String password) {
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getPassword().equals(password))
+                .orElse(null);
+    }
 }

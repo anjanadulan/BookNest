@@ -1,10 +1,14 @@
 package com.example.user_service.controller;
 
 import com.example.user_service.data.User;
+import com.example.user_service.data.LoginRequest;
 import com.example.user_service.service.UserService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -30,6 +34,22 @@ public class UserController {
     @PostMapping(path = "/users")
     public User addUser(@RequestBody User newUser) {
         return userService.addUser(newUser);
+    }
+
+    @PostMapping(path = "/users/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest loginRequest) {
+        User user = userService.authenticate(loginRequest.email(), loginRequest.password());
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "id", user.getId(),
+                "name", user.getName(),
+                "email", user.getEmail(),
+                "role", user.getRole()
+        ));
     }
 
     @PutMapping(path = "/users")

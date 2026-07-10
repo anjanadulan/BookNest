@@ -43,6 +43,18 @@ function scrollToSection(sectionId: string) {
   document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
 }
 
+function mapApiOrder(order: ApiOrder): OrderRecord {
+  return {
+    id: `BN-${order.id}`,
+    date: order.orderDate.slice(0, 10),
+    total: Number(order.totalAmount),
+    status: order.status.toUpperCase() === "COMPLETED" ? "Completed" : "Processing",
+    items: (order.orderItems ?? []).map((item) => ({ bookId: item.bookId, quantity: item.quantity })),
+    paymentMethod: "Card",
+    transactionId: "",
+  }
+}
+
 function App() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -90,7 +102,7 @@ function App() {
 
       return matchesCategory && matchesQuery
     })
-  }, [activeCategory, query])
+  }, [activeCategory, books, query])
 
   function toggleSaved(bookId: number) {
     setSavedBooks((current) =>
@@ -101,9 +113,8 @@ function App() {
   }
 
   function addToCart(bookId: number, quantity = 1) {
+    const existing = cartItems.find((item) => item.bookId === bookId)
     setCartItems((current) => {
-      const existing = current.find((item) => item.bookId === bookId)
-
       if (existing) {
         return current.map((item) =>
           item.bookId === bookId
@@ -114,13 +125,25 @@ function App() {
 
       return [...current, { bookId, quantity }]
     })
+
+    if (user?.id) {
+      if (existing?.id) {
+        void updateCartItem({ id: existing.id, userId: user.id, bookId, quantity: existing.quantity + quantity })
+      } else {
+        void createCartItem({ userId: user.id, bookId, quantity }).then((created) => {
+          setCartItems((current) => current.map((item) => item.bookId === bookId ? { ...item, id: created.id, userId: created.userId } : item))
+        })
+      }
+    }
   }
 
   function changeCartQuantity(bookId: number, quantity: number) {
+    const currentItem = cartItems.find((item) => item.bookId === bookId)
     if (quantity < 1) {
       setCartItems((current) =>
         current.filter((item) => item.bookId !== bookId)
       )
+      if (currentItem?.id) void deleteCartItem(currentItem.id)
       return
     }
 
@@ -129,10 +152,13 @@ function App() {
         item.bookId === bookId ? { ...item, quantity } : item
       )
     )
+    if (currentItem?.id && user?.id) void updateCartItem({ id: currentItem.id, userId: user.id, bookId, quantity })
   }
 
   function removeCartItem(bookId: number) {
+    const currentItem = cartItems.find((item) => item.bookId === bookId)
     setCartItems((current) => current.filter((item) => item.bookId !== bookId))
+    if (currentItem?.id) void deleteCartItem(currentItem.id)
   }
 
   function openCatalog() {
@@ -181,8 +207,17 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  function finishAuth(profile: AuthProfile) {
+  async function finishAuth(profile: AuthProfile) {
     setUser(profile)
+    if (profile.id) {
+      try {
+        const [remoteCart, remoteOrders] = await Promise.all([fetchCart(profile.id), fetchOrders(profile.id)])
+        setCartItems(remoteCart)
+        setOrders(remoteOrders.map(mapApiOrder))
+      } catch {
+        setCartItems([])
+      }
+    }
     const returnTo = (location.state as { from?: string } | null)?.from ?? "/"
     navigate(returnTo, { replace: true, state: null })
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -204,6 +239,7 @@ function App() {
 
   function saveProfile(profile: AuthProfile) {
     setUser((current) => ({ ...profile, role: current?.role ?? profile.role }))
+    if (profile.id) void updateUser({ id: profile.id, name: profile.name, email: profile.email, role: profile.role ?? "CUSTOMER" })
   }
 
   function continueToPayment(details: CheckoutDetails) {
@@ -212,27 +248,20 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  function completePayment(payment: PaymentResult) {
+  async function completePayment(payment: PaymentResult) {
+    if (!user?.id) throw new Error("Please sign in before completing payment")
+
     const total = cartItems.reduce((sum, item) => {
       const book = books.find((candidate) => candidate.id === item.bookId)
       return sum + (book?.price ?? 0) * item.quantity
     }, 0)
 
-    setOrders((current) => [
-      {
-        id: `BN-${Date.now().toString().slice(-6)}`,
-        date: new Date().toISOString().slice(0, 10),
-        total,
-        status: "Completed",
-        items: cartItems,
-        paymentMethod:
-          payment.paymentMethod === "CREDIT_CARD"
-            ? `Card ending ${payment.lastFour}`
-            : payment.paymentMethod,
-        transactionId: `TXN-${Date.now().toString().slice(-8)}-MOCK`,
-      },
-      ...current,
-    ])
+    const now = new Date().toISOString().slice(0, 19)
+    const createdOrder = await createOrder({ userId: user.id, totalAmount: total, status: "COMPLETED", orderDate: now, orderItems: cartItems.map((item) => ({ bookId: item.bookId, quantity: item.quantity, price: books.find((book) => book.id === item.bookId)?.price ?? 0 })) })
+    const transactionId = `TXN-${Date.now().toString().slice(-8)}-MOCK`
+    await createPayment({ orderId: createdOrder.id, userId: user.id, amount: total, paymentMethod: payment.paymentMethod, status: "SUCCESS", transactionId, paymentDate: now })
+    await Promise.all(cartItems.filter((item) => item.id).map((item) => deleteCartItem(item.id as number)))
+    setOrders((current) => [{ id: `BN-${createdOrder.id}`, date: now.slice(0, 10), total, status: "Completed", items: cartItems, paymentMethod: payment.paymentMethod === "CREDIT_CARD" ? `Card ending ${payment.lastFour}` : payment.paymentMethod, transactionId }, ...current])
     setCartItems([])
     setCheckoutDetails(null)
     navigate("/orders")
@@ -956,6 +985,7 @@ function BookDetailsRoute({
 }) {
   const { bookId } = useParams()
   const navigate = useNavigate()
+  const { books } = useBookStore()
   const book = books.find((candidate) => candidate.id === Number(bookId))
 
   if (!book) return <Navigate to="/catalog" replace />
