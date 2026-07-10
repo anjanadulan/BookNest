@@ -25,6 +25,7 @@ public class OrderService {
     }
 
     public Order addOrder(Order order) {
+        validateOrder(order);
         if (order.getOrderItems() != null) {
             for (OrderItem item : order.getOrderItems()) {
                 item.setOrder(order);
@@ -34,6 +35,7 @@ public class OrderService {
     }
 
     public Order updateOrder(Order orderDetails) {
+        validateOrder(orderDetails);
         if (orderDetails.getOrderItems() != null) {
             for (OrderItem item : orderDetails.getOrderItems()) {
                 item.setOrder(orderDetails);
@@ -48,5 +50,21 @@ public class OrderService {
 
     public List<Order> getOrdersByUserId(int userId) {
         return orderRepository.getOrdersByUserId(userId);
+    }
+
+    private void validateOrder(Order order) {
+        if (order == null || order.getUserId() <= 0 || order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+            throw new IllegalArgumentException("An order must have a user and at least one item");
+        }
+        double calculatedTotal = 0;
+        for (OrderItem item : order.getOrderItems()) {
+            if (item.getBookId() <= 0 || item.getQuantity() <= 0 || item.getPrice() == null || item.getPrice() < 0) {
+                throw new IllegalArgumentException("Order items must contain valid book, quantity, and price values");
+            }
+            calculatedTotal += item.getPrice() * item.getQuantity();
+        }
+        if (order.getTotalAmount() == null || Math.abs(calculatedTotal - order.getTotalAmount()) > 0.01) {
+            throw new IllegalArgumentException("Order total does not match its items");
+        }
     }
 }

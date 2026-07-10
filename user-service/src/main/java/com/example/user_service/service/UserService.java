@@ -31,6 +31,14 @@ public class UserService {
         return userRepository.save(userDetails);
     }
 
+    public User updateProfile(int id, String name, String email) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        user.setName(name);
+        user.setEmail(email);
+        return userRepository.save(user);
+    }
+
     public void deleteUserByID(int id) {
         userRepository.deleteById(id);
     }

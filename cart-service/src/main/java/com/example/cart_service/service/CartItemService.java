@@ -24,10 +24,12 @@ public class CartItemService {
     }
 
     public CartItem addCartItem(CartItem cartItem) {
+        validateCartItem(cartItem);
         return cartItemRepository.save(cartItem);
     }
 
     public CartItem updateCartItem(CartItem cartItemDetails) {
+        validateCartItem(cartItemDetails);
         return cartItemRepository.save(cartItemDetails);
     }
 
@@ -37,5 +39,11 @@ public class CartItemService {
 
     public List<CartItem> getCartItemsByUserId(int userId) {
         return cartItemRepository.getCartItemsByUserId(userId);
+    }
+
+    private void validateCartItem(CartItem cartItem) {
+        if (cartItem == null || cartItem.getUserId() <= 0 || cartItem.getBookId() <= 0 || cartItem.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Cart items require a valid user, book, and positive quantity");
+        }
     }
 }

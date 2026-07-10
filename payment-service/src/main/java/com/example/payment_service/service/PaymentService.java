@@ -24,10 +24,12 @@ public class PaymentService {
     }
 
     public Payment addPayment(Payment payment) {
+        validatePayment(payment);
         return paymentRepository.save(payment);
     }
 
     public Payment updatePayment(Payment paymentDetails) {
+        validatePayment(paymentDetails);
         return paymentRepository.save(paymentDetails);
     }
 
@@ -37,5 +39,11 @@ public class PaymentService {
 
     public List<Payment> getPaymentsByUserId(int userId) {
         return paymentRepository.getPaymentsByUserId(userId);
+    }
+
+    private void validatePayment(Payment payment) {
+        if (payment == null || payment.getOrderId() <= 0 || payment.getUserId() <= 0 || payment.getAmount() == null || payment.getAmount() <= 0 || payment.getPaymentMethod() == null || payment.getPaymentMethod().isBlank() || payment.getTransactionId() == null || payment.getTransactionId().isBlank()) {
+            throw new IllegalArgumentException("Payment contains invalid required values");
+        }
     }
 }
