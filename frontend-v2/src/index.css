@@ -5,22 +5,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme {
+@theme inline {
   --font-sans: "DM Sans Variable", "Helvetica Neue", sans-serif;
   --font-display: Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-  --color-page: #0c0e0c;
-  --color-ink: #f6f3ec;
-  --color-muted: #a8aaa4;
-  --color-dim: #70746e;
-  --color-line: rgb(246 243 236 / 13%);
-  --color-surface: #151715;
-  --color-surface-light: #1b1e1b;
-  --color-lime: #d8f36a;
-  --color-coral: #ef8d6e;
-  --color-blue: #9ccdf0;
-  --color-orange: #e4a867;
-  --color-violet: #bca8f7;
+  --color-page: var(--page);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-surface-light: var(--surface-light);
+  --color-lime: var(--lime);
+  --color-coral: var(--coral);
+  --color-blue: var(--blue);
+  --color-orange: var(--orange);
+  --color-violet: var(--violet);
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -28,6 +28,54 @@
   color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  --page: #0c0e0c;
+  --ink: #f6f3ec;
+  --muted: #a8aaa4;
+  --dim: #70746e;
+  --line: rgb(246 243 236 / 13%);
+  --surface: #151715;
+  --surface-light: #1b1e1b;
+  --lime: #d8f36a;
+  --coral: #ef8d6e;
+  --blue: #9ccdf0;
+  --orange: #e4a867;
+  --violet: #bca8f7;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --primary: var(--lime);
+  --primary-foreground: var(--page);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--surface);
+  --ring: var(--lime);
+  --destructive: var(--coral);
+}
+
+.light {
+  color-scheme: light;
+  --page: #f5f2e9;
+  --ink: #161916;
+  --muted: #5f665f;
+  --dim: #878d84;
+  --line: rgb(22 25 22 / 14%);
+  --surface: #ebe8df;
+  --surface-light: #e4e1d8;
+  --lime: #a6c437;
+  --coral: #d86d50;
+  --blue: #6ba5cf;
+  --orange: #c57e34;
+  --violet: #8f77d0;
+  --background: var(--page);
+  --foreground: var(--ink);
+  --primary: var(--lime);
+  --primary-foreground: var(--page);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink);
+  --border: var(--line);
+  --input: var(--surface);
+  --ring: var(--lime);
+  --destructive: var(--coral);
 }
 
 @layer base {
@@ -40,8 +88,11 @@
   body {
     min-width: 320px;
     margin: 0;
-    background: #0c0e0c;
-    color: #f6f3ec;
+    background: var(--page);
+    color: var(--ink);
+    transition:
+      background-color 220ms ease-out,
+      color 220ms ease-out;
   }
   button,
   input {
