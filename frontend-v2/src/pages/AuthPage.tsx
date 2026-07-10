@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -11,8 +12,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { loginUser, registerUser } from "@/lib/api"
 
 export type AuthProfile = {
+  id?: number
   name: string
   email: string
   role?: "CUSTOMER" | "ADMIN"
@@ -20,23 +23,35 @@ export type AuthProfile = {
 
 type AuthPageProps = {
   onBack: () => void
-  onSuccess: (profile: AuthProfile) => void
+  onSuccess: (profile: AuthProfile) => void | Promise<void>
 }
 
 export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
-  const [mode, setMode] = useState<"login" | "register">("login")
+  const location = useLocation()
+  const navigate = useNavigate()
+  const mode = location.pathname === "/register" ? "register" : "login"
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onSuccess({
-      name: mode === "register" ? name : email.split("@")[0],
-      email,
-      role: email.toLowerCase() === "admin@booknest.com" ? "ADMIN" : "CUSTOMER",
-    })
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const response = mode === "login"
+        ? await loginUser({ email, password })
+        : await registerUser({ name, email, password, role: email.toLowerCase() === "admin@booknest.com" ? "ADMIN" : "CUSTOMER" })
+      await onSuccess({ id: response.id, name: response.name, email: response.email, role: response.role })
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to connect to the user service")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -109,7 +124,7 @@ export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
               className={`h-auto rounded-none border-b-2 px-0 py-3 text-xs ${mode === "login" ? "border-lime text-ink" : "border-transparent bg-transparent text-dim hover:bg-transparent hover:text-ink"}`}
               variant="ghost"
               type="button"
-              onClick={() => setMode("login")}
+              onClick={() => navigate("/login", { state: location.state })}
             >
               Sign in
             </Button>
@@ -117,7 +132,7 @@ export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
               className={`h-auto rounded-none border-b-2 px-0 py-3 text-xs ${mode === "register" ? "border-lime text-ink" : "border-transparent bg-transparent text-dim hover:bg-transparent hover:text-ink"}`}
               variant="ghost"
               type="button"
-              onClick={() => setMode("register")}
+              onClick={() => navigate("/register", { state: location.state })}
             >
               Create account
             </Button>
@@ -187,11 +202,13 @@ export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
                 </button>
               </div>
             )}
+            {error && <p className="border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{error}</p>}
             <Button
               className="mt-3 h-12 w-full justify-between rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90"
+              disabled={isSubmitting}
               type="submit"
             >
-              {mode === "login" ? "Sign in to BookNest" : "Create my account"}
+              {isSubmitting ? "Connecting..." : mode === "login" ? "Sign in to BookNest" : "Create my account"}
               <ArrowUpRight size={17} />
             </Button>
           </form>

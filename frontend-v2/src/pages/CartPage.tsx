@@ -11,10 +11,13 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { books, type Book } from "@/data/books"
+import type { Book } from "@/data/books"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useBookStore } from "@/state/book-store"
 
 export type CartLine = {
+  id?: number
+  userId?: number
   bookId: number
   quantity: number
 }
@@ -42,6 +45,7 @@ export function CartPage({
   onRemove,
   onCheckout,
 }: CartPageProps) {
+  const { books } = useBookStore()
   const [checkoutMessage, setCheckoutMessage] = useState("")
   const lines = cartItems
     .map((line) => ({

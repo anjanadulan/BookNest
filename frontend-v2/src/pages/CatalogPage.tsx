@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { accentBorders, books, categories, type Book } from "@/data/books"
+import { accentBorders, categories, type Book } from "@/data/books"
+import { useBookStore } from "@/state/book-store"
 
 type CatalogPageProps = {
   onBack: () => void
@@ -37,6 +38,7 @@ export function CatalogPage({
   onToggleSaved,
   onSelectBook,
 }: CatalogPageProps) {
+  const { books } = useBookStore()
   const [query, setQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState("All books")
   const [sortBy, setSortBy] = useState<SortOption>("featured")
@@ -62,7 +64,7 @@ export function CatalogPage({
         return Number(second.rating) - Number(first.rating)
       return first.id - second.id
     })
-  }, [activeCategory, query, sortBy])
+  }, [activeCategory, books, query, sortBy])
 
   return (
     <main className="min-h-screen bg-page text-ink selection:bg-lime selection:text-page">

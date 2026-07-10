@@ -11,8 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { books } from "@/data/books"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useBookStore } from "@/state/book-store"
 import type { CartLine } from "@/pages/CartPage"
 import type { CheckoutDetails } from "@/pages/CheckoutPage"
 
@@ -25,7 +25,7 @@ type PaymentPageProps = {
   cartItems: CartLine[]
   details: CheckoutDetails
   onBack: () => void
-  onComplete: (payment: PaymentResult) => void
+  onComplete: (payment: PaymentResult) => void | Promise<void>
 }
 
 export function PaymentPage({
@@ -34,10 +34,13 @@ export function PaymentPage({
   onBack,
   onComplete,
 }: PaymentPageProps) {
+  const { books } = useBookStore()
   const [cardName, setCardName] = useState(details.name)
   const [cardNumber, setCardNumber] = useState("")
   const [expiry, setExpiry] = useState("")
   const [cvc, setCvc] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const lines = cartItems
     .map((line) => ({
       ...line,
@@ -49,12 +52,20 @@ export function PaymentPage({
     0
   )
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onComplete({
-      paymentMethod: "CREDIT_CARD",
-      lastFour: cardNumber.replace(/\s/g, "").slice(-4),
-    })
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      await onComplete({
+        paymentMethod: "CREDIT_CARD",
+        lastFour: cardNumber.replace(/\s/g, "").slice(-4),
+      })
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Payment service unavailable")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -187,11 +198,13 @@ export function PaymentPage({
               This is a frontend demo payment. No real card details are sent or
               stored.
             </div>
+            {error && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{error}</p>}
             <Button
               className="mt-8 h-12 w-full justify-between rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90 sm:w-[260px]"
+              disabled={isSubmitting}
               type="submit"
             >
-              Pay ${total.toFixed(2)} <ArrowUpRight size={17} />
+              {isSubmitting ? "Processing..." : `Pay $${total.toFixed(2)}`} <ArrowUpRight size={17} />
             </Button>
           </form>
 

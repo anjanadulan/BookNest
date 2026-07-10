@@ -11,8 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { books } from "@/data/books"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useBookStore } from "@/state/book-store"
 import type { AuthProfile } from "@/pages/AuthPage"
 import type { CartLine } from "@/pages/CartPage"
 
@@ -34,6 +34,7 @@ export function CheckoutPage({
   onBack,
   onContinueToPayment,
 }: CheckoutPageProps) {
+  const { books } = useBookStore()
   const [name, setName] = useState(user.name)
   const [email, setEmail] = useState(user.email)
   const lines = cartItems

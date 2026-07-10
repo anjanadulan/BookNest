@@ -16,9 +16,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { books, type Book } from "@/data/books"
+import type { Book } from "@/data/books"
 import type { AuthProfile } from "@/pages/AuthPage"
 import type { OrderRecord } from "@/pages/OrderHistoryPage"
+import { useBookStore } from "@/state/book-store"
 
 type ProfilePageProps = {
   user: AuthProfile
@@ -43,6 +44,7 @@ export function ProfilePage({
   onOpenAdmin,
   onSelectBook,
 }: ProfilePageProps) {
+  const { books } = useBookStore()
   const [name, setName] = useState(user.name)
   const [email, setEmail] = useState(user.email)
   const [saved, setSaved] = useState(false)

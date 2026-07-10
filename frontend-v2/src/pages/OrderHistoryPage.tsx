@@ -8,8 +8,8 @@ import {
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { books } from "@/data/books"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useBookStore } from "@/state/book-store"
 import type { CartLine } from "@/pages/CartPage"
 
 export type OrderRecord = {
@@ -33,6 +33,7 @@ export function OrderHistoryPage({
   onBack,
   onContinueShopping,
 }: OrderHistoryPageProps) {
+  const { books } = useBookStore()
   return (
     <main className="min-h-screen bg-page text-ink selection:bg-lime selection:text-page">
       <header className="mx-auto flex h-[70px] max-w-[1360px] items-center justify-between border-b border-line px-6 md:h-[82px] md:px-10">

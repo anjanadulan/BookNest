@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { createBook, deleteBook, updateBook } from "@/lib/api"
+import type { Book } from "@/data/books"
 import type { OrderRecord } from "@/pages/OrderHistoryPage"
 import { useBookStore } from "@/state/book-store"
 
@@ -55,15 +57,37 @@ const users = [
 ]
 
 const salesBars = [48, 62, 44, 71, 56, 82, 68, 92, 65, 77, 88, 100]
+const categoryIds: Record<string, number> = { Fiction: 1, Science: 2, History: 3, Biography: 4 }
+
+type BookFormState = {
+  title: string
+  author: string
+  category: string
+  isbn: string
+  price: string
+  stock: string
+  coverUrl: string
+  description: string
+}
+
+const emptyBookForm: BookFormState = { title: "", author: "", category: "Fiction", isbn: "", price: "", stock: "0", coverUrl: "", description: "" }
+
+function formFromBook(book: Book): BookFormState {
+  return { title: book.title, author: book.author, category: book.category, isbn: book.isbn ?? "", price: String(book.price), stock: String(book.stock), coverUrl: book.cover, description: book.description }
+}
 
 export function AdminDashboardPage({
   orders,
   onBack,
   onOpenStore,
 }: AdminDashboardPageProps) {
-  const { books } = useBookStore()
+  const { books, refreshBooks } = useBookStore()
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview")
   const [inventoryQuery, setInventoryQuery] = useState("")
+  const [bookForm, setBookForm] = useState<BookFormState | null>(null)
+  const [editingBookId, setEditingBookId] = useState<number | null>(null)
+  const [isSavingBook, setIsSavingBook] = useState(false)
+  const [bookFormError, setBookFormError] = useState<string | null>(null)
 
   const filteredBooks = useMemo(() => {
     const query = inventoryQuery.trim().toLowerCase()
@@ -73,7 +97,7 @@ export function AdminDashboardPage({
         .toLowerCase()
         .includes(query)
     )
-  }, [inventoryQuery])
+  }, [books, inventoryQuery])
 
   const recentOrders =
     orders.length > 0
@@ -100,6 +124,62 @@ export function AdminDashboardPage({
     { id: "orders", label: "Orders", icon: ShoppingBag },
     { id: "users", label: "Users", icon: Users },
   ]
+
+  function openCreateBook() {
+    setEditingBookId(null)
+    setBookFormError(null)
+    setBookForm(emptyBookForm)
+  }
+
+  function openEditBook(book: Book) {
+    setEditingBookId(book.id)
+    setBookFormError(null)
+    setBookForm(formFromBook(book))
+  }
+
+  async function handleBookSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!bookForm) return
+    setIsSavingBook(true)
+    setBookFormError(null)
+
+    const payload = {
+      ...(editingBookId ? { id: editingBookId } : {}),
+      title: bookForm.title,
+      author: bookForm.author,
+      isbn: bookForm.isbn,
+      price: Number(bookForm.price),
+      stock: Number(bookForm.stock),
+      coverUrl: bookForm.coverUrl,
+      description: bookForm.description,
+      category: { id: categoryIds[bookForm.category] ?? 1, name: bookForm.category },
+    }
+
+    try {
+      if (editingBookId) await updateBook(payload)
+      else await createBook(payload)
+      await refreshBooks()
+      setBookForm(null)
+    } catch (requestError) {
+      setBookFormError(requestError instanceof Error ? requestError.message : "Book service unavailable")
+    } finally {
+      setIsSavingBook(false)
+    }
+  }
+
+  async function handleDeleteBook(book: Book) {
+    if (!window.confirm(`Delete “${book.title}” from the catalog?`)) return
+    try {
+      await deleteBook(book.id)
+      await refreshBooks()
+    } catch (requestError) {
+      setBookFormError(requestError instanceof Error ? requestError.message : "Unable to delete this book")
+    }
+  }
+
+  function updateBookForm(field: keyof BookFormState, value: string) {
+    setBookForm((current) => current ? { ...current, [field]: value } : current)
+  }
 
   return (
     <main className="min-h-screen bg-page text-ink selection:bg-lime selection:text-page">
@@ -379,6 +459,7 @@ export function AdminDashboardPage({
               <Button
                 className="h-auto gap-2 rounded-full bg-lime px-4 py-2 text-xs text-page hover:bg-lime/90"
                 type="button"
+                onClick={openCreateBook}
               >
                 <BookOpen size={14} /> Add a book
               </Button>
@@ -442,9 +523,11 @@ export function AdminDashboardPage({
                           className="h-auto bg-transparent px-0 text-xs text-muted hover:bg-transparent hover:text-ink"
                           variant="ghost"
                           type="button"
+                          onClick={() => openEditBook(book)}
                         >
                           Edit <ArrowUpRight size={13} />
                         </Button>
+                        <Button className="ml-3 h-auto bg-transparent px-0 text-xs text-coral hover:bg-transparent hover:text-coral/80" variant="ghost" type="button" onClick={() => void handleDeleteBook(book)}>Delete</Button>
                       </td>
                     </tr>
                   ))}
@@ -557,6 +640,17 @@ export function AdminDashboardPage({
               ))}
             </div>
           </section>
+        )}
+
+        {bookForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-page/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={editingBookId ? "Edit book" : "Add book"}>
+            <form className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-line bg-surface p-6 shadow-2xl md:p-8" onSubmit={handleBookSubmit}>
+              <div className="flex items-start justify-between gap-5 border-b border-line pb-5"><div><span className="font-mono text-[9px] uppercase tracking-[.1em] text-lime">{editingBookId ? "Catalog edit" : "New catalog entry"}</span><h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">{editingBookId ? "Edit this title." : "Add a new title."}</h2></div><Button className="size-8 rounded-full bg-transparent p-0 text-muted hover:bg-page hover:text-ink" size="icon-sm" variant="ghost" type="button" aria-label="Close book form" onClick={() => setBookForm(null)}>×</Button></div>
+              <div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Title</span><Input required value={bookForm.title} onChange={(event) => updateBookForm("title", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Author</span><Input required value={bookForm.author} onChange={(event) => updateBookForm("author", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Category</span><select className="h-11 w-full rounded-3xl border border-line bg-page px-3 text-sm text-ink outline-none focus:border-lime" value={bookForm.category} onChange={(event) => updateBookForm("category", event.target.value)}>{Object.keys(categoryIds).map((category) => <option key={category}>{category}</option>)}</select></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Price</span><Input required min="0" step="0.01" type="number" value={bookForm.price} onChange={(event) => updateBookForm("price", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Stock</span><Input required min="0" type="number" value={bookForm.stock} onChange={(event) => updateBookForm("stock", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">ISBN</span><Input value={bookForm.isbn} onChange={(event) => updateBookForm("isbn", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Cover URL</span><Input value={bookForm.coverUrl} onChange={(event) => updateBookForm("coverUrl", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Description</span><textarea value={bookForm.description} onChange={(event) => updateBookForm("description", event.target.value)} rows={4} className="w-full resize-y rounded-xl border border-line bg-page px-3 py-3 text-sm text-ink outline-none placeholder:text-dim focus:border-lime" /></label></div>
+              {bookFormError && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{bookFormError}</p>}
+              <div className="mt-7 flex justify-end gap-3 border-t border-line pt-5"><Button className="h-10 rounded-full bg-transparent px-4 text-xs text-muted hover:bg-page hover:text-ink" variant="ghost" type="button" onClick={() => setBookForm(null)}>Cancel</Button><Button className="h-10 rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90" disabled={isSavingBook} type="submit">{isSavingBook ? "Saving..." : editingBookId ? "Save changes" : "Add book"}</Button></div>
+            </form>
+          </div>
         )}
       </section>
     </main>

@@ -14,7 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { books, type Book } from "@/data/books"
+import type { Book } from "@/data/books"
+import { useBookStore } from "@/state/book-store"
 
 type BookDetailsPageProps = {
   book: Book
@@ -37,6 +38,7 @@ export function BookDetailsPage({
   onToggleSaved,
   onSelectBook,
 }: BookDetailsPageProps) {
+  const { books } = useBookStore()
   const [quantity, setQuantity] = useState(1)
   const isSaved = savedBooks.includes(book.id)
   const isLowStock = book.stock < 50
@@ -58,7 +60,7 @@ export function BookDetailsPage({
         return first.id - second.id
       })
       .slice(0, 3)
-  }, [book])
+  }, [book, books])
 
   return (
     <main className="min-h-screen bg-page text-ink selection:bg-lime selection:text-page">
