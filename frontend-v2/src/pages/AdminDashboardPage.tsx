@@ -19,7 +19,16 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { createBook, deleteBook, fetchAllOrders, fetchPayments, fetchUsers, updateBook, type ApiOrder, type ApiPayment } from "@/lib/api"
+import {
+  createBook,
+  deleteBook,
+  fetchAllOrders,
+  fetchPayments,
+  fetchUsers,
+  updateBook,
+  type ApiOrder,
+  type ApiPayment,
+} from "@/lib/api"
 import type { Book } from "@/data/books"
 import type { OrderRecord } from "@/pages/OrderHistoryPage"
 import { useBookStore } from "@/state/book-store"
@@ -57,7 +66,12 @@ const fallbackUsers = [
 ]
 
 const salesBars = [48, 62, 44, 71, 56, 82, 68, 92, 65, 77, 88, 100]
-const categoryIds: Record<string, number> = { Fiction: 1, Science: 2, History: 3, Biography: 4 }
+const categoryIds: Record<string, number> = {
+  Fiction: 1,
+  Science: 2,
+  History: 3,
+  Biography: 4,
+}
 
 type BookFormState = {
   title: string
@@ -70,14 +84,44 @@ type BookFormState = {
   description: string
 }
 
-const emptyBookForm: BookFormState = { title: "", author: "", category: "Fiction", isbn: "", price: "", stock: "0", coverUrl: "", description: "" }
+const emptyBookForm: BookFormState = {
+  title: "",
+  author: "",
+  category: "Fiction",
+  isbn: "",
+  price: "",
+  stock: "0",
+  coverUrl: "",
+  description: "",
+}
 
 function formFromBook(book: Book): BookFormState {
-  return { title: book.title, author: book.author, category: book.category, isbn: book.isbn ?? "", price: String(book.price), stock: String(book.stock), coverUrl: book.cover, description: book.description }
+  return {
+    title: book.title,
+    author: book.author,
+    category: book.category,
+    isbn: book.isbn ?? "",
+    price: String(book.price),
+    stock: String(book.stock),
+    coverUrl: book.cover,
+    description: book.description,
+  }
 }
 
 function mapAdminOrder(order: ApiOrder): OrderRecord {
-  return { id: `BN-${order.id}`, date: order.orderDate.slice(0, 10), total: Number(order.totalAmount), status: order.status.toUpperCase() === "COMPLETED" ? "Completed" : "Processing", items: (order.orderItems ?? []).map((item) => ({ bookId: item.bookId, quantity: item.quantity })), paymentMethod: "Card", transactionId: "" }
+  return {
+    id: `BN-${order.id}`,
+    date: order.orderDate.slice(0, 10),
+    total: Number(order.totalAmount),
+    status:
+      order.status.toUpperCase() === "COMPLETED" ? "Completed" : "Processing",
+    items: (order.orderItems ?? []).map((item) => ({
+      bookId: item.bookId,
+      quantity: item.quantity,
+    })),
+    paymentMethod: "Card",
+    transactionId: "",
+  }
 }
 
 export function AdminDashboardPage({
@@ -101,13 +145,25 @@ export function AdminDashboardPage({
     const timer = window.setTimeout(() => {
       void Promise.all([fetchUsers(), fetchAllOrders(), fetchPayments()])
         .then(([remoteUsers, remoteOrders, remotePayments]) => {
-          setAdminUsers(remoteUsers.map((user) => ({ name: user.name, email: user.email, role: user.role, joined: "Remote account", status: "Active" })))
+          setAdminUsers(
+            remoteUsers.map((user) => ({
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              joined: "Remote account",
+              status: "Active",
+            }))
+          )
           setAdminOrders(remoteOrders.map(mapAdminOrder))
           setPayments(remotePayments)
           setAdminDataError(null)
         })
         .catch((requestError: unknown) => {
-          setAdminDataError(requestError instanceof Error ? requestError.message : "Admin services unavailable")
+          setAdminDataError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Admin services unavailable"
+          )
         })
     }, 0)
 
@@ -178,7 +234,10 @@ export function AdminDashboardPage({
       stock: Number(bookForm.stock),
       coverUrl: bookForm.coverUrl,
       description: bookForm.description,
-      category: { id: categoryIds[bookForm.category] ?? 1, name: bookForm.category },
+      category: {
+        id: categoryIds[bookForm.category] ?? 1,
+        name: bookForm.category,
+      },
     }
 
     try {
@@ -187,7 +246,11 @@ export function AdminDashboardPage({
       await refreshBooks()
       setBookForm(null)
     } catch (requestError) {
-      setBookFormError(requestError instanceof Error ? requestError.message : "Book service unavailable")
+      setBookFormError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Book service unavailable"
+      )
     } finally {
       setIsSavingBook(false)
     }
@@ -199,12 +262,18 @@ export function AdminDashboardPage({
       await deleteBook(book.id)
       await refreshBooks()
     } catch (requestError) {
-      setBookFormError(requestError instanceof Error ? requestError.message : "Unable to delete this book")
+      setBookFormError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to delete this book"
+      )
     }
   }
 
   function updateBookForm(field: keyof BookFormState, value: string) {
-    setBookForm((current) => current ? { ...current, [field]: value } : current)
+    setBookForm((current) =>
+      current ? { ...current, [field]: value } : current
+    )
   }
 
   return (
@@ -332,7 +401,11 @@ export function AdminDashboardPage({
             </Button>
           ))}
         </div>
-        {adminDataError && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs text-coral">Some admin data could not be loaded: {adminDataError}</p>}
+        {adminDataError && (
+          <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs text-coral">
+            Some admin data could not be loaded: {adminDataError}
+          </p>
+        )}
 
         {activeTab === "overview" && (
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_.7fr]">
@@ -554,7 +627,14 @@ export function AdminDashboardPage({
                         >
                           Edit <ArrowUpRight size={13} />
                         </Button>
-                        <Button className="ml-3 h-auto bg-transparent px-0 text-xs text-coral hover:bg-transparent hover:text-coral/80" variant="ghost" type="button" onClick={() => void handleDeleteBook(book)}>Delete</Button>
+                        <Button
+                          className="ml-3 h-auto bg-transparent px-0 text-xs text-coral hover:bg-transparent hover:text-coral/80"
+                          variant="ghost"
+                          type="button"
+                          onClick={() => void handleDeleteBook(book)}
+                        >
+                          Delete
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -671,18 +751,236 @@ export function AdminDashboardPage({
 
         {activeTab === "payments" && (
           <section className="mt-10 border border-line bg-surface p-5 md:p-7">
-            <div className="flex items-end justify-between"><div><span className="font-mono text-[9px] tracking-[.1em] text-dim uppercase">Payment ledger</span><h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">Money, reconciled.</h2></div><span className="font-mono text-[9px] tracking-[.08em] text-dim uppercase">{payments.length} transactions</span></div>
-            <div className="mt-8 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-xs"><thead className="border-b border-line font-mono text-[9px] tracking-[.08em] text-dim uppercase"><tr><th className="pb-4 font-normal">Transaction</th><th className="pb-4 font-normal">Order</th><th className="pb-4 font-normal">Method</th><th className="pb-4 font-normal">Amount</th><th className="pb-4 font-normal">Status</th><th className="pb-4 font-normal">Date</th></tr></thead><tbody className="divide-y divide-line">{payments.map((payment) => <tr key={payment.id ?? payment.transactionId}><td className="py-5 font-mono text-[10px]">{payment.transactionId}</td><td className="py-5 text-muted">#{payment.orderId}</td><td className="py-5 text-muted">{payment.paymentMethod}</td><td className="py-5 font-medium">${Number(payment.amount).toFixed(2)}</td><td className="py-5"><Badge className={`rounded-full border-0 px-2.5 py-1 font-mono text-[8px] font-normal tracking-[.08em] uppercase ${payment.status.toUpperCase() === "SUCCESS" ? "bg-lime/10 text-lime" : "bg-coral/10 text-coral"}`}>{payment.status}</Badge></td><td className="py-5 text-muted">{payment.paymentDate.slice(0, 10)}</td></tr>)}</tbody></table>{payments.length === 0 && <p className="py-10 text-center text-sm text-muted">No payment records returned by payment-service.</p>}</div>
+            <div className="flex items-end justify-between">
+              <div>
+                <span className="font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                  Payment ledger
+                </span>
+                <h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">
+                  Money, reconciled.
+                </h2>
+              </div>
+              <span className="font-mono text-[9px] tracking-[.08em] text-dim uppercase">
+                {payments.length} transactions
+              </span>
+            </div>
+            <div className="mt-8 overflow-x-auto">
+              <table className="w-full min-w-[700px] text-left text-xs">
+                <thead className="border-b border-line font-mono text-[9px] tracking-[.08em] text-dim uppercase">
+                  <tr>
+                    <th className="pb-4 font-normal">Transaction</th>
+                    <th className="pb-4 font-normal">Order</th>
+                    <th className="pb-4 font-normal">Method</th>
+                    <th className="pb-4 font-normal">Amount</th>
+                    <th className="pb-4 font-normal">Status</th>
+                    <th className="pb-4 font-normal">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {payments.map((payment) => (
+                    <tr key={payment.id ?? payment.transactionId}>
+                      <td className="py-5 font-mono text-[10px]">
+                        {payment.transactionId}
+                      </td>
+                      <td className="py-5 text-muted">#{payment.orderId}</td>
+                      <td className="py-5 text-muted">
+                        {payment.paymentMethod}
+                      </td>
+                      <td className="py-5 font-medium">
+                        ${Number(payment.amount).toFixed(2)}
+                      </td>
+                      <td className="py-5">
+                        <Badge
+                          className={`rounded-full border-0 px-2.5 py-1 font-mono text-[8px] font-normal tracking-[.08em] uppercase ${payment.status.toUpperCase() === "SUCCESS" ? "bg-lime/10 text-lime" : "bg-coral/10 text-coral"}`}
+                        >
+                          {payment.status}
+                        </Badge>
+                      </td>
+                      <td className="py-5 text-muted">
+                        {payment.paymentDate.slice(0, 10)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {payments.length === 0 && (
+                <p className="py-10 text-center text-sm text-muted">
+                  No payment records returned by payment-service.
+                </p>
+              )}
+            </div>
           </section>
         )}
 
         {bookForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-page/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={editingBookId ? "Edit book" : "Add book"}>
-            <form className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-line bg-surface p-6 shadow-2xl md:p-8" onSubmit={handleBookSubmit}>
-              <div className="flex items-start justify-between gap-5 border-b border-line pb-5"><div><span className="font-mono text-[9px] uppercase tracking-[.1em] text-lime">{editingBookId ? "Catalog edit" : "New catalog entry"}</span><h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">{editingBookId ? "Edit this title." : "Add a new title."}</h2></div><Button className="size-8 rounded-full bg-transparent p-0 text-muted hover:bg-page hover:text-ink" size="icon-sm" variant="ghost" type="button" aria-label="Close book form" onClick={() => setBookForm(null)}>×</Button></div>
-              <div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Title</span><Input required value={bookForm.title} onChange={(event) => updateBookForm("title", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Author</span><Input required value={bookForm.author} onChange={(event) => updateBookForm("author", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Category</span><select className="h-11 w-full rounded-3xl border border-line bg-page px-3 text-sm text-ink outline-none focus:border-lime" value={bookForm.category} onChange={(event) => updateBookForm("category", event.target.value)}>{Object.keys(categoryIds).map((category) => <option key={category}>{category}</option>)}</select></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Price</span><Input required min="0" step="0.01" type="number" value={bookForm.price} onChange={(event) => updateBookForm("price", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Stock</span><Input required min="0" type="number" value={bookForm.stock} onChange={(event) => updateBookForm("stock", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">ISBN</span><Input value={bookForm.isbn} onChange={(event) => updateBookForm("isbn", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Cover URL</span><Input value={bookForm.coverUrl} onChange={(event) => updateBookForm("coverUrl", event.target.value)} className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30" /></label><label className="block sm:col-span-2"><span className="mb-2 block font-mono text-[9px] uppercase tracking-[.1em] text-dim">Description</span><textarea value={bookForm.description} onChange={(event) => updateBookForm("description", event.target.value)} rows={4} className="w-full resize-y rounded-xl border border-line bg-page px-3 py-3 text-sm text-ink outline-none placeholder:text-dim focus:border-lime" /></label></div>
-              {bookFormError && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{bookFormError}</p>}
-              <div className="mt-7 flex justify-end gap-3 border-t border-line pt-5"><Button className="h-10 rounded-full bg-transparent px-4 text-xs text-muted hover:bg-page hover:text-ink" variant="ghost" type="button" onClick={() => setBookForm(null)}>Cancel</Button><Button className="h-10 rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90" disabled={isSavingBook} type="submit">{isSavingBook ? "Saving..." : editingBookId ? "Save changes" : "Add book"}</Button></div>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-page/75 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label={editingBookId ? "Edit book" : "Add book"}
+          >
+            <form
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto border border-line bg-surface p-6 shadow-2xl md:p-8"
+              onSubmit={handleBookSubmit}
+            >
+              <div className="flex items-start justify-between gap-5 border-b border-line pb-5">
+                <div>
+                  <span className="font-mono text-[9px] tracking-[.1em] text-lime uppercase">
+                    {editingBookId ? "Catalog edit" : "New catalog entry"}
+                  </span>
+                  <h2 className="mt-3 font-display text-3xl font-normal tracking-[-.06em]">
+                    {editingBookId ? "Edit this title." : "Add a new title."}
+                  </h2>
+                </div>
+                <Button
+                  className="size-8 rounded-full bg-transparent p-0 text-muted hover:bg-page hover:text-ink"
+                  size="icon-sm"
+                  variant="ghost"
+                  type="button"
+                  aria-label="Close book form"
+                  onClick={() => setBookForm(null)}
+                >
+                  ×
+                </Button>
+              </div>
+              <div className="mt-7 grid gap-5 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Title
+                  </span>
+                  <Input
+                    required
+                    value={bookForm.title}
+                    onChange={(event) =>
+                      updateBookForm("title", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Author
+                  </span>
+                  <Input
+                    required
+                    value={bookForm.author}
+                    onChange={(event) =>
+                      updateBookForm("author", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Category
+                  </span>
+                  <select
+                    className="h-11 w-full rounded-3xl border border-line bg-page px-3 text-sm text-ink outline-none focus:border-lime"
+                    value={bookForm.category}
+                    onChange={(event) =>
+                      updateBookForm("category", event.target.value)
+                    }
+                  >
+                    {Object.keys(categoryIds).map((category) => (
+                      <option key={category}>{category}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Price
+                  </span>
+                  <Input
+                    required
+                    min="0"
+                    step="0.01"
+                    type="number"
+                    value={bookForm.price}
+                    onChange={(event) =>
+                      updateBookForm("price", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Stock
+                  </span>
+                  <Input
+                    required
+                    min="0"
+                    type="number"
+                    value={bookForm.stock}
+                    onChange={(event) =>
+                      updateBookForm("stock", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    ISBN
+                  </span>
+                  <Input
+                    value={bookForm.isbn}
+                    onChange={(event) =>
+                      updateBookForm("isbn", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Cover URL
+                  </span>
+                  <Input
+                    value={bookForm.coverUrl}
+                    onChange={(event) =>
+                      updateBookForm("coverUrl", event.target.value)
+                    }
+                    className="h-11 border-line bg-page text-sm text-ink placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block font-mono text-[9px] tracking-[.1em] text-dim uppercase">
+                    Description
+                  </span>
+                  <textarea
+                    value={bookForm.description}
+                    onChange={(event) =>
+                      updateBookForm("description", event.target.value)
+                    }
+                    rows={4}
+                    className="w-full resize-y rounded-xl border border-line bg-page px-3 py-3 text-sm text-ink outline-none placeholder:text-dim focus:border-lime"
+                  />
+                </label>
+              </div>
+              {bookFormError && (
+                <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">
+                  {bookFormError}
+                </p>
+              )}
+              <div className="mt-7 flex justify-end gap-3 border-t border-line pt-5">
+                <Button
+                  className="h-10 rounded-full bg-transparent px-4 text-xs text-muted hover:bg-page hover:text-ink"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => setBookForm(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="h-10 rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90"
+                  disabled={isSavingBook}
+                  type="submit"
+                >
+                  {isSavingBook
+                    ? "Saving..."
+                    : editingBookId
+                      ? "Save changes"
+                      : "Add book"}
+                </Button>
+              </div>
             </form>
           </div>
         )}

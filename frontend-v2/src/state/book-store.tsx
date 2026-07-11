@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
 
 import { books as fallbackBooks, type Book } from "@/data/books"
 import { fetchBooks } from "@/lib/api"
@@ -24,7 +31,11 @@ export function BookStoreProvider({ children }: { children: ReactNode }) {
       if (remoteBooks.length > 0) setBooks(remoteBooks)
       setError(null)
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Book service unavailable")
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Book service unavailable"
+      )
     } finally {
       setIsLoading(false)
     }
@@ -35,14 +46,22 @@ export function BookStoreProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer)
   }, [])
 
-  const value = useMemo(() => ({ books, isLoading, error, refreshBooks }), [books, isLoading, error])
+  const value = useMemo(
+    () => ({ books, isLoading, error, refreshBooks }),
+    [books, isLoading, error]
+  )
 
-  return <BookStoreContext.Provider value={value}>{children}</BookStoreContext.Provider>
+  return (
+    <BookStoreContext.Provider value={value}>
+      {children}
+    </BookStoreContext.Provider>
+  )
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useBookStore() {
   const context = useContext(BookStoreContext)
-  if (!context) throw new Error("useBookStore must be used within BookStoreProvider")
+  if (!context)
+    throw new Error("useBookStore must be used within BookStoreProvider")
   return context
 }

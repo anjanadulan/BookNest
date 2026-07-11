@@ -431,7 +431,7 @@ function App() {
     <>
       <header
         ref={liquidHeaderRef}
-        className="liquid-glass-header fixed top-3 left-1/2 z-50 flex h-[64px] w-[calc(100%_-_24px)] max-w-[1240px] -translate-x-1/2 items-center justify-between rounded-full px-4 md:top-4 md:h-[70px] md:w-[calc(100%_-_48px)] md:px-8"
+        className="liquid-glass-header fixed top-3 left-1/2 z-50 flex h-[64px] w-[calc(100%_-_24px)] max-w-[1240px] -translate-x-1/2 items-center justify-between rounded-full px-4 md:top-6 md:h-[60px] md:w-[calc(100%_-_48px)] md:px-8"
       >
         <button
           className="group inline-flex items-center gap-2.5 text-base font-semibold tracking-[-.04em]"

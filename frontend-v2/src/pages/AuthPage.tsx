@@ -43,12 +43,30 @@ export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
     setError(null)
 
     try {
-      const response = mode === "login"
-        ? await loginUser({ email, password })
-        : await registerUser({ name, email, password, role: email.toLowerCase() === "admin@booknest.com" ? "ADMIN" : "CUSTOMER" })
-      await onSuccess({ id: response.id, name: response.name, email: response.email, role: response.role })
+      const response =
+        mode === "login"
+          ? await loginUser({ email, password })
+          : await registerUser({
+              name,
+              email,
+              password,
+              role:
+                email.toLowerCase() === "admin@booknest.com"
+                  ? "ADMIN"
+                  : "CUSTOMER",
+            })
+      await onSuccess({
+        id: response.id,
+        name: response.name,
+        email: response.email,
+        role: response.role,
+      })
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to connect to the user service")
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to connect to the user service"
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -202,13 +220,21 @@ export function AuthPage({ onBack, onSuccess }: AuthPageProps) {
                 </button>
               </div>
             )}
-            {error && <p className="border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{error}</p>}
+            {error && (
+              <p className="border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">
+                {error}
+              </p>
+            )}
             <Button
               className="mt-3 h-12 w-full justify-between rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90"
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Connecting..." : mode === "login" ? "Sign in to BookNest" : "Create my account"}
+              {isSubmitting
+                ? "Connecting..."
+                : mode === "login"
+                  ? "Sign in to BookNest"
+                  : "Create my account"}
               <ArrowUpRight size={17} />
             </Button>
           </form>

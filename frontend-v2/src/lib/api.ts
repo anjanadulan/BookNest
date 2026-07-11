@@ -13,7 +13,11 @@ export const apiUrls = {
   users: apiBase("VITE_USER_API_URL", "http://localhost:8085"),
 }
 
-async function request<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  baseUrl: string,
+  path: string,
+  init?: RequestInit
+): Promise<T> {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
@@ -57,8 +61,11 @@ export function mapApiBook(book: ApiBook): Book {
     rating: "4.8",
     format: "Digital edition",
     stock: book.stock,
-    description: book.description ?? "A thoughtful addition to your reading shelf.",
-    cover: book.coverUrl ?? "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=900&q=85",
+    description:
+      book.description ?? "A thoughtful addition to your reading shelf.",
+    cover:
+      book.coverUrl ??
+      "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=900&q=85",
     accent: accents[(book.id - 1) % accents.length],
   }
 }
@@ -76,23 +83,47 @@ export type BookWritePayload = {
 }
 
 export async function createBook(payload: BookWritePayload) {
-  return mapApiBook(await request<ApiBook>(apiUrls.books, "/api/books", { method: "POST", body: JSON.stringify(payload) }))
+  return mapApiBook(
+    await request<ApiBook>(apiUrls.books, "/api/books", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    })
+  )
 }
 
 export async function updateBook(payload: BookWritePayload) {
-  return mapApiBook(await request<ApiBook>(apiUrls.books, "/api/books", { method: "PUT", body: JSON.stringify(payload) }))
+  return mapApiBook(
+    await request<ApiBook>(apiUrls.books, "/api/books", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    })
+  )
 }
 
 export async function deleteBook(bookId: number) {
-  return request<void>(apiUrls.books, `/api/books/${bookId}`, { method: "DELETE" })
+  return request<void>(apiUrls.books, `/api/books/${bookId}`, {
+    method: "DELETE",
+  })
 }
 
 export async function reserveBookStock(bookId: number, quantity: number) {
-  return mapApiBook(await request<ApiBook>(apiUrls.books, `/api/books/${bookId}/reserve?quantity=${quantity}`, { method: "POST" }))
+  return mapApiBook(
+    await request<ApiBook>(
+      apiUrls.books,
+      `/api/books/${bookId}/reserve?quantity=${quantity}`,
+      { method: "POST" }
+    )
+  )
 }
 
 export async function releaseBookStock(bookId: number, quantity: number) {
-  return mapApiBook(await request<ApiBook>(apiUrls.books, `/api/books/${bookId}/release?quantity=${quantity}`, { method: "POST" }))
+  return mapApiBook(
+    await request<ApiBook>(
+      apiUrls.books,
+      `/api/books/${bookId}/release?quantity=${quantity}`,
+      { method: "POST" }
+    )
+  )
 }
 
 export async function fetchBooks() {
@@ -101,7 +132,9 @@ export async function fetchBooks() {
 }
 
 export async function fetchBook(bookId: number) {
-  return mapApiBook(await request<ApiBook>(apiUrls.books, `/api/books/${bookId}`))
+  return mapApiBook(
+    await request<ApiBook>(apiUrls.books, `/api/books/${bookId}`)
+  )
 }
 
 export type ApiUser = {
@@ -112,44 +145,83 @@ export type ApiUser = {
 }
 
 export type LoginRequest = { email: string; password: string }
-export type RegisterRequest = { name: string; email: string; password: string; role: "CUSTOMER" | "ADMIN" }
+export type RegisterRequest = {
+  name: string
+  email: string
+  password: string
+  role: "CUSTOMER" | "ADMIN"
+}
 
 export async function loginUser(payload: LoginRequest) {
-  return request<ApiUser>(apiUrls.users, "/api/users/login", { method: "POST", body: JSON.stringify(payload) })
+  return request<ApiUser>(apiUrls.users, "/api/users/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function registerUser(payload: RegisterRequest) {
-  return request<ApiUser>(apiUrls.users, "/api/users", { method: "POST", body: JSON.stringify(payload) })
+  return request<ApiUser>(apiUrls.users, "/api/users", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function fetchUsers() {
   return request<ApiUser[]>(apiUrls.users, "/api/users")
 }
 
-export async function updateUserProfile(payload: Pick<ApiUser, "id" | "name" | "email">) {
-  return request<ApiUser>(apiUrls.users, `/api/users/${payload.id}/profile`, { method: "PUT", body: JSON.stringify({ name: payload.name, email: payload.email }) })
+export async function updateUserProfile(
+  payload: Pick<ApiUser, "id" | "name" | "email">
+) {
+  return request<ApiUser>(apiUrls.users, `/api/users/${payload.id}/profile`, {
+    method: "PUT",
+    body: JSON.stringify({ name: payload.name, email: payload.email }),
+  })
 }
 
-export type ApiCartItem = { id: number; userId: number; bookId: number; quantity: number }
+export type ApiCartItem = {
+  id: number
+  userId: number
+  bookId: number
+  quantity: number
+}
 
 export async function fetchCart(userId: number) {
   return request<ApiCartItem[]>(apiUrls.cart, `/api/cart?userId=${userId}`)
 }
 
 export async function createCartItem(payload: Omit<ApiCartItem, "id">) {
-  return request<ApiCartItem>(apiUrls.cart, "/api/cart", { method: "POST", body: JSON.stringify(payload) })
+  return request<ApiCartItem>(apiUrls.cart, "/api/cart", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function updateCartItem(payload: ApiCartItem) {
-  return request<ApiCartItem>(apiUrls.cart, "/api/cart", { method: "PUT", body: JSON.stringify(payload) })
+  return request<ApiCartItem>(apiUrls.cart, "/api/cart", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function deleteCartItem(id: number) {
   return request<void>(apiUrls.cart, `/api/cart/${id}`, { method: "DELETE" })
 }
 
-export type ApiOrderItem = { id?: number; bookId: number; quantity: number; price: number }
-export type ApiOrder = { id: number; userId: number; totalAmount: number; status: string; orderDate: string; orderItems?: ApiOrderItem[] }
+export type ApiOrderItem = {
+  id?: number
+  bookId: number
+  quantity: number
+  price: number
+}
+export type ApiOrder = {
+  id: number
+  userId: number
+  totalAmount: number
+  status: string
+  orderDate: string
+  orderItems?: ApiOrderItem[]
+}
 
 export async function fetchOrders(userId: number) {
   return request<ApiOrder[]>(apiUrls.orders, `/api/orders?userId=${userId}`)
@@ -160,25 +232,47 @@ export async function fetchAllOrders() {
 }
 
 export async function createOrder(payload: Omit<ApiOrder, "id">) {
-  return request<ApiOrder>(apiUrls.orders, "/api/orders", { method: "POST", body: JSON.stringify(payload) })
+  return request<ApiOrder>(apiUrls.orders, "/api/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function updateOrder(payload: ApiOrder) {
-  return request<ApiOrder>(apiUrls.orders, "/api/orders", { method: "PUT", body: JSON.stringify(payload) })
+  return request<ApiOrder>(apiUrls.orders, "/api/orders", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function deleteOrder(orderId: number) {
-  return request<void>(apiUrls.orders, `/api/orders/${orderId}`, { method: "DELETE" })
+  return request<void>(apiUrls.orders, `/api/orders/${orderId}`, {
+    method: "DELETE",
+  })
 }
 
-export type ApiPayment = { id?: number; orderId: number; userId: number; amount: number; paymentMethod: string; status: string; transactionId: string; paymentDate: string }
+export type ApiPayment = {
+  id?: number
+  orderId: number
+  userId: number
+  amount: number
+  paymentMethod: string
+  status: string
+  transactionId: string
+  paymentDate: string
+}
 
 export async function createPayment(payload: Omit<ApiPayment, "id">) {
-  return request<ApiPayment>(apiUrls.payments, "/api/payments", { method: "POST", body: JSON.stringify(payload) })
+  return request<ApiPayment>(apiUrls.payments, "/api/payments", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
 }
 
 export async function deletePayment(paymentId: number) {
-  return request<void>(apiUrls.payments, `/api/payments/${paymentId}`, { method: "DELETE" })
+  return request<void>(apiUrls.payments, `/api/payments/${paymentId}`, {
+    method: "DELETE",
+  })
 }
 
 export async function fetchPayments() {

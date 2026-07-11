@@ -62,7 +62,11 @@ export function PaymentPage({
         lastFour: cardNumber.replace(/\s/g, "").slice(-4),
       })
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Payment service unavailable")
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Payment service unavailable"
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -198,13 +202,18 @@ export function PaymentPage({
               This is a frontend demo payment. No real card details are sent or
               stored.
             </div>
-            {error && <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">{error}</p>}
+            {error && (
+              <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs leading-[1.5] text-coral">
+                {error}
+              </p>
+            )}
             <Button
               className="mt-8 h-12 w-full justify-between rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90 sm:w-[260px]"
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Processing..." : `Pay $${total.toFixed(2)}`} <ArrowUpRight size={17} />
+              {isSubmitting ? "Processing..." : `Pay $${total.toFixed(2)}`}{" "}
+              <ArrowUpRight size={17} />
             </Button>
           </form>
 
