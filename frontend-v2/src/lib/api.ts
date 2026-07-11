@@ -32,7 +32,11 @@ async function request<T>(
   }
 
   if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
+
+  const body = await response.text()
+  if (!body.trim()) return undefined as T
+
+  return JSON.parse(body) as T
 }
 
 export type ApiBook = {

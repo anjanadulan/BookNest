@@ -1,4 +1,3 @@
-import { useState } from "react"
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -46,7 +45,6 @@ export function CartPage({
   onCheckout,
 }: CartPageProps) {
   const { books } = useBookStore()
-  const [checkoutMessage, setCheckoutMessage] = useState("")
   const lines = cartItems
     .map((line) => ({
       ...line,
@@ -57,15 +55,6 @@ export function CartPage({
     (total, line) => total + line.book.price * line.quantity,
     0
   )
-
-  function handleCheckout() {
-    if (isAuthenticated) {
-      setCheckoutMessage("Your order is ready for the payment step next.")
-      return
-    }
-
-    onCheckout()
-  }
 
   return (
     <main className="min-h-screen bg-page text-ink selection:bg-lime selection:text-page">
@@ -252,7 +241,7 @@ export function CartPage({
               <Button
                 className="mt-7 h-12 w-full justify-between rounded-full bg-lime px-5 text-xs text-page hover:bg-lime/90"
                 type="button"
-                onClick={handleCheckout}
+                onClick={onCheckout}
               >
                 {isAuthenticated
                   ? "Continue to checkout"
@@ -260,10 +249,9 @@ export function CartPage({
                 <ArrowUpRight size={17} />
               </Button>
               <p className="mt-4 text-center text-[10px] leading-[1.5] text-dim">
-                {checkoutMessage ||
-                  (isAuthenticated
-                    ? `Ready for you, ${userName ?? "reader"}.`
-                    : "You will need a BookNest account before payment.")}
+                {isAuthenticated
+                  ? `Ready for you, ${userName ?? "reader"}.`
+                  : "You will need a BookNest account before payment."}
               </p>
             </aside>
           </div>
