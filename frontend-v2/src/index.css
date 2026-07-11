@@ -130,13 +130,74 @@
   }
 }
 
-@keyframes ticker-slide {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-25%);
-  }
+.reveal-text-target,
+.reveal-element-target {
+  --reveal-delay: 0ms;
+  opacity: 0;
+  filter: blur(6px);
+  transition:
+    opacity 580ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 720ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 720ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay);
+  will-change: opacity, transform;
+}
+
+.reveal-text-target {
+  margin-bottom: -0.16em;
+  padding-bottom: 0.16em;
+  clip-path: inset(0 0 100% 0);
+  transform: translate3d(0, 0.65em, 0);
+}
+
+.reveal-element-target {
+  transform: translate3d(0, 22px, 0) scale(0.985);
+}
+
+.reveal-text-target.is-revealed,
+.reveal-element-target.is-revealed {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) scale(1);
+  clip-path: inset(0 0 0 0);
+}
+
+.liquid-glass-header {
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background: color-mix(in srgb, var(--surface) 46%, transparent);
+  box-shadow:
+    0 18px 60px rgb(0 0 0 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    inset 0 -1px 0 rgb(0 0 0 / 12%);
+}
+
+.liquid-glass-header::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+  border-radius: inherit;
+}
+
+.liquid-glass-header::after {
+  inset: 0;
+  z-index: 2;
+  border: 1px solid rgb(255 255 255 / 7%);
+  box-shadow:
+    inset 10px 10px 24px rgb(255 255 255 / 4%),
+    inset -10px -10px 24px rgb(0 0 0 / 8%);
+}
+
+.liquid-glass-header > * {
+  z-index: 3;
+}
+
+.liquid-glass-fallback {
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+}
+
+.route-content main > header {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -147,5 +208,15 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .reveal-text-target,
+  .reveal-element-target,
+  .reveal-text-target.is-revealed,
+  .reveal-element-target.is-revealed {
+    clip-path: none;
+    filter: none;
+    opacity: 1;
+    transform: none;
   }
 }
