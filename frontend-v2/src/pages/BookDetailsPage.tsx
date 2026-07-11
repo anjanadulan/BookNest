@@ -118,9 +118,9 @@ export function BookDetailsPage({
         <div className="grid gap-12 md:grid-cols-[minmax(300px,.8fr)_minmax(0,1fr)] md:items-center md:gap-[9vw]">
           <div className="relative mx-auto w-full max-w-[480px] md:mx-0">
             <div className="absolute -inset-6 rounded-full bg-lime/10 blur-3xl" />
-            <div className="group relative aspect-[.76] overflow-hidden border-b-4 border-lime bg-surface shadow-2xl shadow-page/50">
+            <div className="image-zoom-frame group relative aspect-[.76] border-b-4 border-lime bg-surface shadow-2xl shadow-page/50">
               <img
-                className="h-full w-full object-cover brightness-[.9] saturate-[.72] transition-transform duration-700 ease-out group-hover:scale-[1.035]"
+                className="image-hover-smooth h-full w-full object-cover brightness-[.9] saturate-[.72]"
                 src={book.cover}
                 alt={`${book.title} cover artwork`}
               />
@@ -281,9 +281,9 @@ export function BookDetailsPage({
               role="button"
               tabIndex={0}
             >
-              <div className="aspect-[.76] overflow-hidden border-b-2 border-line bg-surface">
+              <div className="image-zoom-frame aspect-[.76] border-b-2 border-line bg-surface">
                 <img
-                  className="h-full w-full object-cover brightness-[.85] saturate-[.7] transition duration-700 ease-out group-hover:scale-[1.04] group-hover:saturate-100"
+                  className="image-hover-smooth h-full w-full object-cover brightness-[.85] saturate-[.7]"
                   src={relatedBook.cover}
                   alt={`${relatedBook.title} cover artwork`}
                 />

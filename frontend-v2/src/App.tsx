@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react"
+import { useMemo, useState } from "react"
 import {
   Navigate,
   Route,
@@ -9,8 +9,6 @@ import {
 } from "react-router-dom"
 import {
   ArrowUpRight,
-  Bookmark,
-  Check,
   ChevronRight,
   CircleUserRound,
   Menu,
@@ -21,12 +19,11 @@ import {
   X,
 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import SideRays from "@/components/SideRays"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { accentBorders, categories, type Book } from "@/data/books"
+import { type Book } from "@/data/books"
 import { useLiquidGlass } from "@/hooks/use-liquid-glass"
 import {
   createCartItem,
@@ -87,7 +84,6 @@ function App() {
     fallbackBlur: 18,
   })
   const { books, refreshBooks } = useBookStore()
-  const [activeCategory, setActiveCategory] = useState("All books")
   const [query, setQuery] = useState("")
   const [cartItems, setCartItems] = useState<CartLine[]>([])
   const [savedBooks, setSavedBooks] = useState<number[]>([])
@@ -120,17 +116,15 @@ function App() {
     const normalizedQuery = query.trim().toLowerCase()
 
     return books.filter((book) => {
-      const matchesCategory =
-        activeCategory === "All books" || book.category === activeCategory
       const matchesQuery =
         !normalizedQuery ||
         `${book.title} ${book.author} ${book.category}`
           .toLowerCase()
           .includes(normalizedQuery)
 
-      return matchesCategory && matchesQuery
+      return matchesQuery
     })
-  }, [activeCategory, books, query])
+  }, [books, query])
 
   function toggleSaved(bookId: number) {
     setSavedBooks((current) =>
@@ -782,9 +776,9 @@ function App() {
                   className="mx-auto grid max-w-[1360px] gap-12 px-6 py-[90px] pb-[105px] md:grid-cols-[minmax(0,.95fr)_minmax(330px,.75fr)] md:items-center md:gap-[10vw] md:px-10 md:py-[145px] md:pb-[170px]"
                   id="journal"
                 >
-                  <div className="group relative aspect-[1.12] overflow-hidden">
+                  <div className="image-zoom-frame group relative aspect-[1.12]">
                     <img
-                      className="h-full w-full object-cover saturate-[.62] sepia-[.12] transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                      className="image-hover-smooth h-full w-full object-cover saturate-[.62] sepia-[.12]"
                       src={books[2].cover}
                       alt="Open book beside a coffee cup"
                     />

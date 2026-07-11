@@ -5,7 +5,7 @@ const TEXT_SELECTOR =
   "main :where(h1, h2, h3, h4, h5, p, li, label, blockquote, figcaption):not([data-reveal-skip])"
 
 const ELEMENT_SELECTOR =
-  "main :where(header, section, article, form, aside, footer, button, a, img, input, textarea, select, table, [role='button'], [data-reveal]):not([data-reveal-skip])"
+  "main :where(header, section, article, form, aside, footer, button, a, input, textarea, select, table, [role='button'], [data-reveal]):not([data-reveal-skip])"
 
 const MINIMUM_TEXT_LENGTH = 2
 
@@ -123,7 +123,8 @@ export function RevealProvider() {
 
       const textCandidates = new Set(
         Array.from(document.querySelectorAll(TEXT_SELECTOR)).filter(
-          hasVisibleText
+          (element) =>
+            !element.closest("[data-reveal-skip]") && hasVisibleText(element)
         )
       )
 
@@ -136,7 +137,11 @@ export function RevealProvider() {
         })
 
       Array.from(document.querySelectorAll(ELEMENT_SELECTOR))
-        .filter((element) => !element.closest(".reveal-text-target"))
+        .filter(
+          (element) =>
+            !element.closest("[data-reveal-skip]") &&
+            !element.closest(".reveal-text-target")
+        )
         .forEach((element, index) => {
           element.classList.add("reveal-element-target")
           element.style.setProperty("--reveal-delay", `${(index % 3) * 24}ms`)

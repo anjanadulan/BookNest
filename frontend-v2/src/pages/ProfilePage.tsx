@@ -264,12 +264,12 @@ export function ProfilePage({
                 {shelf.map((book) => (
                   <article className="group" key={book.id}>
                     <button
-                      className="relative block aspect-[.76] w-full overflow-hidden border-b-2 border-lime bg-surface"
+                      className="image-zoom-frame relative block aspect-[.76] w-full border-b-2 border-lime bg-surface"
                       type="button"
                       onClick={() => onSelectBook(book)}
                     >
                       <img
-                        className="h-full w-full object-cover brightness-[.85] saturate-[.7] transition duration-700 ease-out group-hover:scale-[1.04] group-hover:saturate-100"
+                        className="image-hover-smooth h-full w-full object-cover brightness-[.85] saturate-[.7]"
                         src={book.cover}
                         alt={`${book.title} cover artwork`}
                       />

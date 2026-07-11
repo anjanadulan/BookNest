@@ -196,6 +196,32 @@
   background: color-mix(in srgb, var(--surface) 74%, transparent);
 }
 
+.image-hover-smooth {
+  display: block;
+  backface-visibility: hidden;
+  transform: scale(1) translateZ(0);
+  transition:
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 850ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, filter;
+}
+
+.image-zoom-frame {
+  overflow: hidden;
+}
+
+.image-zoom-frame:hover > .image-hover-smooth,
+.image-zoom-frame:focus-within > .image-hover-smooth {
+  transform: scale(1.045) translateZ(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-hover-smooth {
+    transition: none;
+    transform: none;
+  }
+}
+
 .route-content main > header {
   display: none;
 }

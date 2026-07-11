@@ -13,6 +13,14 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Toggle } from "@/components/ui/toggle"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { accentBorders, categories, type Book } from "@/data/books"
 import { useBookStore } from "@/state/book-store"
@@ -142,7 +150,10 @@ export function CatalogPage({
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1160px] px-6 pb-24 md:px-10">
+      <section
+        className="mx-auto max-w-[1160px] px-6 pb-24 md:px-10"
+        data-reveal-skip
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="relative w-full md:max-w-[370px]">
             <Search
@@ -157,20 +168,51 @@ export function CatalogPage({
               className="h-12 rounded-full border-line bg-surface pl-11 text-sm text-ink shadow-none placeholder:text-dim focus-visible:border-lime focus-visible:ring-1 focus-visible:ring-lime/30"
             />
           </div>
-          <label className="flex items-center gap-3 font-mono text-[10px] tracking-[.08em] text-dim uppercase">
+          <div className="flex items-center gap-3 font-mono text-[10px] tracking-[.08em] text-dim uppercase">
             Sort by
-            <select
-              className="h-10 rounded-full border border-line bg-surface px-4 text-[10px] tracking-[.08em] text-ink uppercase transition-colors outline-none focus:border-lime"
+            <Select
               value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as SortOption)}
-              aria-label="Sort books"
+              onValueChange={(value) => setSortBy(value as SortOption)}
             >
-              <option value="featured">Featured</option>
-              <option value="rating">Highest rated</option>
-              <option value="price-low">Price: low to high</option>
-              <option value="price-high">Price: high to low</option>
-            </select>
-          </label>
+              <SelectTrigger
+                className="h-10 min-w-[180px] border-line bg-surface px-4 text-[10px] tracking-[.08em] text-ink uppercase hover:bg-surface-light"
+                aria-label="Sort books"
+              >
+                <SelectValue placeholder="Featured" />
+              </SelectTrigger>
+              <SelectContent
+                className="!z-[100] !min-w-[220px] !bg-page p-1 !text-ink !shadow-[0_20px_50px_rgba(0,0,0,.16)]"
+                align="end"
+                alignItemWithTrigger={false}
+                sideOffset={8}
+              >
+                <SelectItem
+                  className="rounded-3xl px-3 py-2.5 text-[13px] font-normal focus:bg-surface-light"
+                  value="featured"
+                >
+                  Featured
+                </SelectItem>
+                <SelectItem
+                  className="rounded-3xl px-3 py-2.5 text-[13px] font-normal focus:bg-surface-light"
+                  value="rating"
+                >
+                  Highest rated
+                </SelectItem>
+                <SelectItem
+                  className="rounded-3xl px-3 py-2.5 text-[13px] font-normal focus:bg-surface-light"
+                  value="price-low"
+                >
+                  Price: low to high
+                </SelectItem>
+                <SelectItem
+                  className="rounded-3xl px-3 py-2.5 text-[13px] font-normal focus:bg-surface-light"
+                  value="price-high"
+                >
+                  Price: high to low
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div
@@ -179,17 +221,17 @@ export function CatalogPage({
           aria-label="Catalog categories"
         >
           {categories.map((category) => (
-            <Button
+            <Toggle
               className={`h-auto shrink-0 rounded-full border px-4 py-2 font-mono text-[10px] font-normal tracking-[.05em] uppercase ${activeCategory === category ? "border-lime bg-lime text-page hover:bg-lime" : "border-line bg-transparent text-muted hover:bg-surface hover:text-ink"}`}
               variant="outline"
               key={category}
               type="button"
-              role="tab"
-              aria-selected={activeCategory === category}
-              onClick={() => setActiveCategory(category)}
+              pressed={activeCategory === category}
+              aria-label={`Filter by ${category}`}
+              onPressedChange={() => setActiveCategory(category)}
             >
               {category}
-            </Button>
+            </Toggle>
           ))}
         </div>
 
@@ -215,10 +257,10 @@ export function CatalogPage({
                 style={{ "--card-delay": `${index * 55}ms` } as CSSProperties}
               >
                 <div
-                  className={`relative aspect-[.76] overflow-hidden border-b-[3px] bg-surface ${accentBorders[book.accent]}`}
+                  className={`image-zoom-frame relative aspect-[.76] border-b-[3px] bg-surface ${accentBorders[book.accent]}`}
                 >
                   <img
-                    className="h-full w-full object-cover brightness-[.87] saturate-[.7] transition duration-700 ease-out group-hover:scale-[1.04] group-hover:brightness-100 group-hover:saturate-100"
+                    className="catalog-book-image image-hover-smooth h-full w-full object-cover brightness-[.87] saturate-[.7]"
                     src={book.cover}
                     alt={`${book.title} cover artwork`}
                   />
