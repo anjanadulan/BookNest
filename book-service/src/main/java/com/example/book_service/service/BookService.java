@@ -43,4 +43,24 @@ public class BookService {
     public List<Book> getBookByIsbn(String isbn) {
         return bookRepository.getBooksByIsbn(isbn);
     }
+
+    public Book reserveStock(int id, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+        if (bookRepository.reserveStock(id, quantity) == 0) {
+            throw new IllegalStateException("Insufficient stock for book: " + id);
+        }
+        return getBookByID(id);
+    }
+
+    public Book releaseStock(int id, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+        if (bookRepository.releaseStock(id, quantity) == 0) {
+            throw new IllegalStateException("Book not found: " + id);
+        }
+        return getBookByID(id);
+    }
 }

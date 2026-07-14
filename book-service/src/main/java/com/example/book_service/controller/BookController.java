@@ -3,6 +3,8 @@ package com.example.book_service.controller;
 import com.example.book_service.data.Book;
 import com.example.book_service.service.BookService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -50,6 +52,28 @@ public class BookController {
     @GetMapping(path = "/books", params = {"isbn"})
     public List<Book> getBookByIsbn(@RequestParam String isbn) {
         return bookService.getBookByIsbn(isbn);
+    }
+
+    @PostMapping(path = "/books/{id}/reserve")
+    public ResponseEntity<Book> reserveStock(@PathVariable int id, @RequestParam int quantity) {
+        try {
+            return ResponseEntity.ok(bookService.reserveStock(id, quantity));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    @PostMapping(path = "/books/{id}/release")
+    public ResponseEntity<Book> releaseStock(@PathVariable int id, @RequestParam int quantity) {
+        try {
+            return ResponseEntity.ok(bookService.releaseStock(id, quantity));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalStateException exception) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
 

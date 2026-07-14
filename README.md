@@ -1,150 +1,296 @@
-# BookNest: Microservices-Based E-Bookshop Platform
+# BookNest
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-anjanadulan%2FBookNest-blue?style=flat-square&logo=github)](https://github.com/anjanadulan/BookNest)
+BookNest is a full-stack e-bookshop application built with React, Tailwind CSS, shadcn/ui, Spring Boot, and MySQL. The backend is split into five independent services, each with its own database.
 
-BookNest is a modern, distributed e-commerce application designed around a **3-Tier, Microservices Architecture**. The system splits core business domains into autonomous services, enforcing strict data isolation with a dedicated MySQL database for each service layer.
+The project currently supports:
 
----
+- Book catalog browsing and book details
+- Search and category filtering
+- Customer registration and login
+- Persistent shopping carts
+- Checkout and mock card payments
+- Stock reservation and release during checkout
+- Order history and customer profile editing
+- Admin book management, users, orders, and payment views
+- Light and dark themes
 
-## 🏗️ System Architecture & Port Allocation
+> This is an academic/demo application. Authentication is currently implemented with the user service and frontend role checks; production-grade JWT/session security, password hashing, and a real payment gateway are not included.
 
-The application is decomposed into five independent microservices communicating synchronously over REST HTTP endpoints:
+## Architecture
 
-* **`book-service`** (Port `8081`): Handles catalog management, book categorization, pricing structures, and inventory.
-* **`cart-service`** (Port `8082`): Manages temporary transactional staging for customer shopping sessions prior to checking out.
-* **`order-service`** (Port `8083`): Orchestrates order placement, processing, and bridges data verification across services.
-* **`payment-service`** (Port `8084`): Mock transactional ledger verifying credit card payment validations.
-* **`user-service`** (Port `8085`): Manages customer/admin user profiles, registration, credentials, and roles (`CUSTOMER`, `ADMIN`).
+```mermaid
+flowchart LR
+    UI[React frontend\nVite :5173]
+    Books[Book service\n:8081]
+    Cart[Cart service\n:8082]
+    Orders[Order service\n:8083]
+    Payments[Payment service\n:8084]
+    Users[User service\n:8085]
 
-### 📐 Architectural Highlights
-* **Database-per-Service Pattern:** No service is allowed direct access to another service's database schema. Inter-service data validation is entirely handled via clean REST interfaces.
-* **Service Decoupling:** Every microservice is compiled, managed, built, and run as an entirely independent Maven project, ensuring clean separation of concerns.
-* **Data Integrity & Relational Mapping:** Leverages JPA/Hibernate relationships (e.g., `@OneToMany` and `@ManyToOne` bindings between `Order` and `OrderItem`) for structured relational mapping.
+    UI --> Books
+    UI --> Cart
+    UI --> Orders
+    UI --> Payments
+    UI --> Users
 
----
+    Books --> BookDB[(booknest_book)]
+    Cart --> CartDB[(booknest_cart)]
+    Orders --> OrderDB[(booknest_order)]
+    Payments --> PaymentDB[(booknest_payment)]
+    Users --> UserDB[(booknest_user)]
+```
 
-## 📂 Project Structure
+### Services
+
+| Service | Port | Database | Responsibility |
+| --- | ---: | --- | --- |
+| `book-service` | `8081` | `booknest_book` | Books, categories, prices, stock, and stock reservations |
+| `cart-service` | `8082` | `booknest_cart` | Customer cart items |
+| `order-service` | `8083` | `booknest_order` | Orders and order items |
+| `payment-service` | `8084` | `booknest_payment` | Mock payment records |
+| `user-service` | `8085` | `booknest_user` | Registration, login, profiles, and roles |
+
+The frontend runs on Vite's default port, `5173`.
+
+## Prerequisites
+
+Install the following before starting the project:
+
+- Java 17 or newer
+- Apache Maven 3.9 or newer
+- Node.js 20 or newer and npm
+- MySQL 5.7+; MySQL 8 is recommended
+- Git, if cloning the repository
+
+The current Spring configuration expects MySQL on port `3308`. If your MySQL server uses the usual port `3306`, update the datasource URLs in each service's `src/main/resources/application.properties`.
+
+## Project structure
 
 ```text
 BookNest/
-├── book-service/        # Port 8081 (Catalog & Category Management)
-├── cart-service/        # Port 8082 (Session Cart items staging)
-├── order-service/       # Port 8083 (Order & Invoice Management)
-├── payment-service/     # Port 8084 (Transaction & Payment Mock)
-├── user-service/        # Port 8085 (User profiles & Roles)
-├── db_setup.sql         # Consolidated DB Schema & Seeding Script
-└── README.md            # Project Documentation
+├── book-service/        # Catalog and inventory API
+├── cart-service/        # Cart API
+├── order-service/       # Order API
+├── payment-service/     # Mock payment API
+├── user-service/        # User and authentication API
+├── frontend-v2/         # React + Vite frontend
+├── db_setup.sql         # Database creation and seed data
+├── README.md            # Setup and development guide
+└── README_API.md        # Detailed REST API reference
 ```
 
----
+## Database setup
 
-## 🛠️ Technology Stack
+### 1. Start MySQL
 
-* **Backend:** Java 17, Spring Boot v4.1.0 (Spring Web, Spring Data JPA)
-* **Database:** MySQL Server 8+ (Isolated database schemas per microservice)
-* **Data Handler:** Hibernate / Object-Relational Mapping (ORM)
-* **Dependency Management:** Apache Maven (Multi-Module Layout)
-* **API Testing:** Postman API client
+Start MySQL and make sure it is listening on port `3308`. Confirm the connection details in these five files:
 
----
-
-## ⚙️ Configuration & Local Setup
-
-### 1. Database Initialization
-Ensure your MySQL instance is running. Execute the consolidated initialization script found at the root of the project to bootstrap all databases, tables, and seeding data:
-```bash
-mysql -u root -p < db_setup.sql
-```
-*Alternatively, copy and run the contents of [db_setup.sql](db_setup.sql) in your preferred SQL client (MySQL Workbench, DBeaver, etc.).*
-
-This creates and seeds five databases:
-* `booknest_book`
-* `booknest_user`
-* `booknest_cart`
-* `booknest_order`
-* `booknest_payment`
-
-### 2. Application Properties Configuration
-Ensure each microservice's `src/main/resources/application.properties` targets its respective port and database URL.
-Example configuration for **`book-service`**:
-```properties
-server.port=8081
-spring.application.name=book-service
-spring.datasource.url=jdbc:mysql://localhost:3306/booknest_book
-spring.datasource.username=root
-spring.datasource.password=your_mysql_password
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+```text
+book-service/src/main/resources/application.properties
+cart-service/src/main/resources/application.properties
+order-service/src/main/resources/application.properties
+payment-service/src/main/resources/application.properties
+user-service/src/main/resources/application.properties
 ```
 
-### 3. Build & Run the Services
-To build and package all services, run the following command in each microservice folder:
-```bash
-./mvnw clean package -DskipTests
+Each file should point to its own database and use the correct local MySQL username/password. Do not commit real production credentials.
+
+### 2. Create and seed the databases
+
+From the repository root, run the SQL script using MySQL's command-line client:
+
+```powershell
+Get-Content .\db_setup.sql | mysql -u root -p -P 3308
 ```
-To run the Spring Boot applications:
-```bash
-./mvnw spring-boot:run
+
+Alternatively, open `db_setup.sql` in MySQL Workbench or DBeaver and execute it.
+
+The script creates and seeds:
+
+```text
+booknest_user
+booknest_book
+booknest_cart
+booknest_order
+booknest_payment
 ```
 
----
+The seed data includes these demo accounts:
 
-## 📡 REST API Endpoints Summary
+| Email | Password | Role |
+| --- | --- | --- |
+| `admin@booknest.com` | `admin123` | `ADMIN` |
+| `john@gmail.com` | `john123` | `CUSTOMER` |
+| `jane@gmail.com` | `jane123` | `CUSTOMER` |
 
-### 📚 Book Service (Port `8081`)
-| HTTP Method | Endpoint | Request Body | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/books` | *None* | Retrieve all available books |
-| **GET** | `/api/books/{id}` | *None* | Retrieve a specific book by ID |
-| **GET** | `/api/books?name={name}` | *None* | Search for books by title |
-| **POST** | `/api/books` | `Book` JSON | Create a new book entry |
-| **PUT** | `/api/books` | `Book` JSON | Update an existing book |
-| **DELETE** | `/api/books/{id}` | *None* | Delete a book by ID |
+These credentials are for local development only.
 
-### 🛒 Cart Service (Port `8082`)
-| HTTP Method | Endpoint | Request Body | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/cart` | *None* | Retrieve all cart items |
-| **GET** | `/api/cart/{id}` | *None* | Retrieve a specific cart item by ID |
-| **GET** | `/api/cart?userId={userId}` | *None* | Retrieve cart items for a specific user |
-| **POST** | `/api/cart` | `CartItem` JSON | Add a new item to the cart |
-| **PUT** | `/api/cart` | `CartItem` JSON | Update a cart item (e.g. quantity) |
-| **DELETE** | `/api/cart/{id}` | *None* | Remove a cart item by ID |
+## Backend setup and run
 
-### 📦 Order Service (Port `8083`)
-| HTTP Method | Endpoint | Request Body | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/orders` | *None* | Retrieve all orders |
-| **GET** | `/api/orders/{id}` | *None* | Retrieve a specific order by ID (includes order items) |
-| **GET** | `/api/orders?userId={userId}` | *None* | Retrieve all orders placed by a specific user |
-| **POST** | `/api/orders` | `Order` JSON | Place a new order (with nested `orderItems`) |
-| **PUT** | `/api/orders` | `Order` JSON | Update an existing order |
-| **DELETE** | `/api/orders/{id}` | *None* | Delete an order by ID (cascades to items) |
+Each backend service is an independent Maven/Spring Boot application. Open one terminal for each service.
 
-### 💳 Payment Service (Port `8084`)
-| HTTP Method | Endpoint | Request Body | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/payments` | *None* | Retrieve all payment records |
-| **GET** | `/api/payments/{id}` | *None* | Retrieve a specific payment by ID |
-| **GET** | `/api/payments?userId={userId}` | *None* | Retrieve all payments associated with a specific user |
-| **POST** | `/api/payments` | `Payment` JSON | Record a new payment entry |
-| **PUT** | `/api/payments` | `Payment` JSON | Update an existing payment record |
-| **DELETE** | `/api/payments/{id}` | *None* | Delete a payment record by ID |
+From the repository root, run:
 
-### 👥 User Service (Port `8085`)
-| HTTP Method | Endpoint | Request Body | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/api/users` | *None* | Retrieve all user profiles |
-| **GET** | `/api/users/{id}` | *None* | Retrieve a specific user by ID |
-| **GET** | `/api/users?name={name}` | *None* | Search for users by name |
-| **POST** | `/api/users` | `User` JSON | Create a new user profile |
-| **PUT** | `/api/users` | `User` JSON | Update an existing user |
-| **DELETE** | `/api/users/{id}` | *None* | Delete a user by ID |
+```powershell
+cd .\book-service
+mvn spring-boot:run
+```
 
----
+Then repeat the same command in separate terminals for:
 
-## 🎓 Viva Preparation & Architectural Focus
-* **Academic Rigor:** Designed around core enterprise software engineering principles such as the **Database-per-Service** and **Single Responsibility Principle (SRP)**. Shows clear understanding of distributed architecture.
-* **Synchronous REST Communication:** Demonstrates how clean endpoints validate cross-service constraints (e.g., verifying if the Book or User exists before processing an order).
-* **Data Separation:** Strict database mapping proves there is no shared-memory or schema leakage across services, keeping the architecture loosely coupled.
+```text
+cart-service
+order-service
+payment-service
+user-service
+```
+
+The services should be available at:
+
+```text
+http://localhost:8081
+http://localhost:8082
+http://localhost:8083
+http://localhost:8084
+http://localhost:8085
+```
+
+If Maven Wrapper is available in your environment, `./mvnw spring-boot:run` can be used instead of `mvn spring-boot:run`.
+
+## Frontend setup and run
+
+Open another terminal:
+
+```powershell
+cd .\frontend-v2
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+Open the URL printed by Vite, normally:
+
+```text
+http://localhost:5173
+```
+
+The frontend reads service URLs from `.env`:
+
+```env
+VITE_BOOK_API_URL=http://localhost:8081
+VITE_CART_API_URL=http://localhost:8082
+VITE_ORDER_API_URL=http://localhost:8083
+VITE_PAYMENT_API_URL=http://localhost:8084
+VITE_USER_API_URL=http://localhost:8085
+```
+
+The frontend has the same localhost defaults in code, but keeping a `.env` file makes local or deployed service URLs explicit.
+
+## Checkout flow
+
+Checkout is coordinated by the frontend across the backend services:
+
+1. The frontend fetches the latest book catalog and prices.
+2. It verifies that every cart item still exists and has sufficient stock.
+3. It reserves stock atomically through `book-service`.
+4. It creates a `PENDING` order through `order-service`.
+5. It records a successful mock payment through `payment-service`.
+6. It updates the order to `COMPLETED`.
+7. It deletes the customer's cart items through `cart-service`.
+8. It refreshes the catalog so the new stock is shown immediately.
+
+If payment or order completion fails, the frontend attempts to delete the partial payment/order and releases any stock reservations already made. The payment screen displays the error instead of clearing the cart.
+
+Stock endpoints:
+
+```text
+POST http://localhost:8081/api/books/{id}/reserve?quantity=2
+POST http://localhost:8081/api/books/{id}/release?quantity=2
+```
+
+The payment implementation is simulated. No real card details are sent to an external provider.
+
+## Testing and validation
+
+### Frontend checks
+
+```powershell
+cd .\frontend-v2
+npm run typecheck
+npm run lint
+```
+
+To create a production frontend bundle:
+
+```powershell
+npm run build
+```
+
+### Backend tests
+
+Run the test suite separately in each service:
+
+```powershell
+cd .\book-service; mvn test
+cd ..\cart-service; mvn test
+cd ..\order-service; mvn test
+cd ..\payment-service; mvn test
+cd ..\user-service; mvn test
+```
+
+The current backend tests verify that each Spring application context starts successfully and can connect to its configured database. A complete browser-based end-to-end checkout test still requires all five services and the frontend to be running together.
+
+## API reference
+
+See [README_API.md](README_API.md) for the full REST endpoint list and example payloads.
+
+The main endpoint groups are:
+
+```text
+GET/POST/PUT/DELETE /api/books       book-service
+GET/POST/PUT/DELETE /api/cart        cart-service
+GET/POST/PUT/DELETE /api/orders      order-service
+GET/POST/DELETE     /api/payments    payment-service
+GET/POST/PUT/DELETE /api/users       user-service
+```
+
+Useful smoke tests after starting the services:
+
+```powershell
+Invoke-RestMethod http://localhost:8081/api/books
+Invoke-RestMethod http://localhost:8082/api/cart?userId=2
+Invoke-RestMethod http://localhost:8083/api/orders?userId=3
+Invoke-RestMethod http://localhost:8085/api/users
+```
+
+## Troubleshooting
+
+### A service cannot connect to MySQL
+
+Check that:
+
+1. MySQL is running.
+2. MySQL is listening on port `3308`.
+3. The corresponding `booknest_*` database exists.
+4. The username and password in that service's `application.properties` are correct.
+5. `db_setup.sql` has been executed.
+
+### The frontend shows API errors
+
+Make sure all required backend services are running and that the URLs in `frontend-v2/.env` match their ports. Restart Vite after changing `.env` values.
+
+### A port is already in use
+
+Stop the process using the port or change the corresponding `server.port` value and frontend `VITE_*_API_URL` value together.
+
+### Admin features are unavailable
+
+Sign in with the seeded admin account. The current admin restriction is a frontend role check and is not a substitute for backend authorization in production.
+
+## Development notes
+
+- Do not share database tables between services. Each service owns its own schema.
+- Keep API changes reflected in both the backend controller and `frontend-v2/src/lib/api.ts`.
+- Use the stock reservation endpoints during any new purchase flow so inventory cannot be oversold by stale catalog data.
+- Keep payment handling mock-only until a real payment provider and secure server-side integration are added.
+- Avoid committing `.env` files or real credentials.
