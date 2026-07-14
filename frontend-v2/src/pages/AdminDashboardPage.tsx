@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   createBook,
   deleteBook,
@@ -388,26 +389,25 @@ export function AdminDashboardPage({
           </div>
         </div>
 
-        <div className="mt-12 flex gap-2 overflow-x-auto border-b border-line pb-3">
-          {tabItems.map(({ id, label, icon: Icon }) => (
-            <Button
-              className={`h-auto shrink-0 gap-2 rounded-full border px-4 py-2 text-xs ${activeTab === id ? "border-lime bg-lime text-page hover:bg-lime" : "border-line bg-transparent text-muted hover:bg-surface hover:text-ink"}`}
-              variant="outline"
-              type="button"
-              key={id}
-              onClick={() => setActiveTab(id)}
-            >
-              <Icon size={14} /> {label}
-            </Button>
-          ))}
-        </div>
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as DashboardTab)} className="w-full">
+          <TabsList variant="line" className="mt-12 flex w-full gap-2 overflow-x-auto border-b border-line pb-3 justify-start rounded-none h-auto bg-transparent">
+            {tabItems.map(({ id, label, icon: Icon }) => (
+              <TabsTrigger
+                value={id}
+                key={id}
+                className="h-auto shrink-0 gap-2 rounded-full border border-line! bg-transparent px-4 py-2 text-xs text-muted hover:bg-surface hover:text-ink data-active:border-lime! data-active:bg-lime! data-active:text-page! data-active:shadow-none"
+              >
+                <Icon size={14} /> {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
         {adminDataError && (
           <p className="mt-5 border border-coral/30 bg-coral/10 p-3 text-xs text-coral">
             Some admin data could not be loaded: {adminDataError}
           </p>
         )}
 
-        {activeTab === "overview" && (
+          <TabsContent value="overview" className="outline-none mt-0">
           <div className="mt-10 grid gap-6 lg:grid-cols-[1.3fr_.7fr]">
             <section className="border border-line bg-surface p-5 md:p-7">
               <div className="flex items-start justify-between">
@@ -543,9 +543,9 @@ export function AdminDashboardPage({
               </div>
             </section>
           </div>
-        )}
+        </TabsContent>
 
-        {activeTab === "inventory" && (
+          <TabsContent value="inventory" className="outline-none mt-0">
           <section className="mt-10 border border-line bg-surface p-5 md:p-7">
             <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div>
@@ -642,9 +642,9 @@ export function AdminDashboardPage({
               </table>
             </div>
           </section>
-        )}
+        </TabsContent>
 
-        {activeTab === "orders" && (
+          <TabsContent value="orders" className="outline-none mt-0">
           <section className="mt-10 border border-line bg-surface p-5 md:p-7">
             <div>
               <span className="font-mono text-[9px] tracking-[.1em] text-dim uppercase">
@@ -695,9 +695,9 @@ export function AdminDashboardPage({
               </table>
             </div>
           </section>
-        )}
+        </TabsContent>
 
-        {activeTab === "users" && (
+          <TabsContent value="users" className="outline-none mt-0">
           <section className="mt-10 border border-line bg-surface p-5 md:p-7">
             <div className="flex items-end justify-between">
               <div>
@@ -747,9 +747,9 @@ export function AdminDashboardPage({
               ))}
             </div>
           </section>
-        )}
+        </TabsContent>
 
-        {activeTab === "payments" && (
+          <TabsContent value="payments" className="outline-none mt-0">
           <section className="mt-10 border border-line bg-surface p-5 md:p-7">
             <div className="flex items-end justify-between">
               <div>
@@ -810,7 +810,8 @@ export function AdminDashboardPage({
               )}
             </div>
           </section>
-        )}
+        </TabsContent>
+      </Tabs>
 
         {bookForm && (
           <div
