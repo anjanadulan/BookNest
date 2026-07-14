@@ -46,12 +46,13 @@ export function RevealProvider() {
         ".reveal-text-target, .reveal-element-target, .is-revealed"
       )
       .forEach((element) => {
-        element.classList.remove(
+        const htmlEl = element as HTMLElement;
+        htmlEl.classList.remove(
           "reveal-text-target",
           "reveal-element-target",
           "is-revealed"
         )
-        element.style.removeProperty("--reveal-delay")
+        htmlEl.style.removeProperty("--reveal-delay")
       })
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -131,9 +132,10 @@ export function RevealProvider() {
       Array.from(textCandidates)
         .filter((element) => isTopLevelTextElement(element, textCandidates))
         .forEach((element, index) => {
-          element.classList.add("reveal-text-target")
-          element.style.setProperty("--reveal-delay", `${(index % 3) * 30}ms`)
-          registerElement(element)
+          const htmlEl = element as HTMLElement;
+          htmlEl.classList.add("reveal-text-target")
+          htmlEl.style.setProperty("--reveal-delay", `${(index % 3) * 30}ms`)
+          registerElement(htmlEl)
         })
 
       Array.from(document.querySelectorAll(ELEMENT_SELECTOR))
@@ -143,9 +145,10 @@ export function RevealProvider() {
             !element.closest(".reveal-text-target")
         )
         .forEach((element, index) => {
-          element.classList.add("reveal-element-target")
-          element.style.setProperty("--reveal-delay", `${(index % 3) * 24}ms`)
-          registerElement(element)
+          const htmlEl = element as HTMLElement;
+          htmlEl.classList.add("reveal-element-target")
+          htmlEl.style.setProperty("--reveal-delay", `${(index % 3) * 24}ms`)
+          registerElement(htmlEl)
         })
 
       scheduleVisibilityCheck()
