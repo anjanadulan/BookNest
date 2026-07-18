@@ -52,7 +52,64 @@ graph TD
 
 ---
 
-## 2. Microservice Descriptions & Port Map
+## 2. REST & MVC Architecture in BookNest
+
+BookNest leverages the **Model-View-Controller (MVC)** design pattern, implemented across decoupled Spring Boot microservices (acting as Model and Controller) and a React client (acting as the View).
+
+```mermaid
+graph LR
+    subgraph Client [View Layer]
+        React[React Vite Frontend]
+    end
+
+    subgraph Service [Controller & Model Layer]
+        Controller[REST Controller]
+        ServiceLayer[Service Layer]
+        Repo[JPA Repository]
+        Entity[Model / Entities]
+    end
+
+    React -->|HTTP REST Request| Controller
+    Controller -->|Delegates| ServiceLayer
+    ServiceLayer -->|Queries| Repo
+    Repo -->|Maps| Entity
+    Controller -->|JSON Response| React
+```
+
+### 2.1. Model-View-Controller (MVC) Pattern Breakdown
+
+1. **Model (Data Representation & Entities)**:
+   * Mapped directly to MySQL database schemas using Java Persistence API (JPA) annotations (such as `@Entity`, `@Table`, `@Id`, `@Column`).
+   * *Example*: In `book-service`, the `Book` class (`com.example.book_service.data.Book`) defines the shape of our catalog items (including title, author, price, coverUrl, description).
+   * *Example*: Spring Data JPA repositories (like `BookRepository` interface extending `JpaRepository`) handle entity querying and database updates behind the scenes.
+
+2. **View (Presentation Layer)**:
+   * Since this is a decoupled, headless API setup, the **Spring Boot backends do not render HTML views directly**.
+   * Instead, they serialize Model structures into standardized **JSON payloads** and transmit them via HTTP.
+   * The **View** is decoupled and implemented entirely on the client-side via **React (`frontend-v2`)**. The frontend fetches the JSON models from backend ports and dynamically renders the interfaces (e.g. Catalog grid, Checkout dialogs, Profile forms) in the browser.
+
+3. **Controller (Endpoints Handler)**:
+   * Spring controllers annotated with `@RestController` (like `BookController`, `UserController`) act as the entry gateways.
+   * They listen for incoming HTTP request verbs, parse request bodies or parameter queries (using `@RequestBody`, `@RequestParam`, `@PathVariable`), delegate processing to Service layers (e.g. `BookService`), and return Java objects which Spring automatically serializes to JSON views.
+
+---
+
+### 2.2. RESTful Principles in BookNest
+
+BookNest adheres strictly to the core guidelines of **REpresentational State Transfer (REST)**:
+
+1. **Client-Server Separation**: The client (React) and the servers (Spring Boot microservices) are completely decoupled. They can be refactored or redeployed independently, communicating solely via HTTP.
+2. **Statelessness**: The servers do not maintain client session states. Each HTTP request contains all context needed (such as `userId` or transaction amounts) to resolve the transaction. User sessions are persisted locally on the client via `localStorage`.
+3. **Uniform Interface**: Uses uniform resource naming schemas and standard HTTP verbs to execute actions:
+   * `GET` (Safe, Idempotent): Used to retrieve data (e.g. `GET /api/books` lists all books; `GET /api/books/{id}` pulls one).
+   * `POST` (Non-Idempotent): Used to create new resources (e.g. `POST /api/orders` places a checkout invoice).
+   * `PUT` (Idempotent): Used to update resources (e.g. `PUT /api/users` modifies user profiles).
+   * `DELETE` (Idempotent): Used to remove resources (e.g. `DELETE /api/cart/{id}` clears cart selections).
+4. **Decoupled Service Addressing**: Each microservice addresses a specific resource endpoint collection on its own isolated server port (e.g. port `8081` for Books, port `8085` for Users, etc.).
+
+---
+
+## 3. Microservice Descriptions & Port Map
 
 | Service Name | Port | Database Name | Description |
 | :--- | :--- | :--- | :--- |
@@ -64,7 +121,7 @@ graph TD
 
 ---
 
-## 3. Detailed REST Endpoints Reference
+## 4. Detailed REST Endpoints Reference
 
 ### 3.1. Book Service (`book-service` on Port `8081`)
 Manages the inventory catalog.
