@@ -389,15 +389,24 @@ export function AdminDashboardPage({
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as DashboardTab)} className="w-full">
-          <TabsList variant="line" className="mt-12 flex w-full gap-2 overflow-x-auto border-b border-line pb-3 justify-start rounded-none h-auto bg-transparent">
+        <Tabs
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as DashboardTab)}
+          className="w-full"
+        >
+          <TabsList
+            aria-label="Admin dashboard sections"
+            variant="line"
+            className="mt-12 flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-line bg-transparent pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {tabItems.map(({ id, label, icon: Icon }) => (
               <TabsTrigger
                 value={id}
                 key={id}
-                className="h-auto shrink-0 gap-2 rounded-full border border-line! bg-transparent px-4 py-2 text-xs text-muted hover:bg-surface hover:text-ink data-active:border-lime! data-active:bg-lime! data-active:text-page! data-active:shadow-none"
+                className="group relative h-auto flex-none gap-2 rounded-none border-0! px-3 py-3.5 text-xs text-muted after:bottom-0 after:h-0.5 after:bg-lime after:opacity-0 hover:bg-surface/70 hover:text-ink data-active:bg-transparent data-active:text-ink data-active:after:opacity-100 focus-visible:border-0! focus-visible:ring-2 focus-visible:ring-lime/50 focus-visible:ring-offset-2 focus-visible:ring-offset-page"
               >
-                <Icon size={14} /> {label}
+                <Icon className="text-dim transition-colors group-data-active:text-lime" size={14} />
+                {label}
               </TabsTrigger>
             ))}
           </TabsList>

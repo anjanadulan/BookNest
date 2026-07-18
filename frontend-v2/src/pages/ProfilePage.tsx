@@ -7,6 +7,7 @@ import {
   Check,
   ChevronRight,
   Mail,
+  LogOut,
   Settings2,
   ShoppingBag,
   Sparkles,
@@ -31,6 +32,7 @@ type ProfilePageProps = {
   onViewOrders: () => void
   onOpenAdmin: () => void
   onSelectBook: (book: Book) => void
+  onLogout: () => void
 }
 
 export function ProfilePage({
@@ -43,6 +45,7 @@ export function ProfilePage({
   onViewOrders,
   onOpenAdmin,
   onSelectBook,
+  onLogout,
 }: ProfilePageProps) {
   const { books } = useBookStore()
   const [name, setName] = useState(user.name)
@@ -96,6 +99,14 @@ export function ProfilePage({
             onClick={onViewOrders}
           >
             Order history <ArrowUpRight size={15} />
+          </Button>
+          <Button
+            className="h-auto gap-2 rounded-full border-line bg-transparent px-3 py-2 text-xs text-muted hover:bg-coral/10 hover:text-coral"
+            variant="outline"
+            type="button"
+            onClick={onLogout}
+          >
+            <LogOut size={14} /> <span className="hidden sm:inline">Log out</span>
           </Button>
         </div>
       </header>

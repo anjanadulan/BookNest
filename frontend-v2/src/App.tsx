@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   Navigate,
   Route,
@@ -53,6 +53,22 @@ import { PaymentPage, type PaymentResult } from "@/pages/PaymentPage"
 import { ProfilePage } from "@/pages/ProfilePage"
 import { useBookStore } from "@/state/book-store"
 
+const AUTH_STORAGE_KEY = "booknest.auth"
+
+function readStoredUser(): AuthProfile | null {
+  try {
+    const stored = window.localStorage.getItem(AUTH_STORAGE_KEY)
+    if (!stored) return null
+
+    const profile = JSON.parse(stored) as AuthProfile
+    if (!profile.name || !profile.email) return null
+    return profile
+  } catch {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    return null
+  }
+}
+
 function scrollToSection(sectionId: string) {
   document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" })
 }
@@ -87,7 +103,7 @@ function App() {
   const [query, setQuery] = useState("")
   const [cartItems, setCartItems] = useState<CartLine[]>([])
   const [savedBooks, setSavedBooks] = useState<number[]>([])
-  const [user, setUser] = useState<AuthProfile | null>(null)
+  const [user, setUser] = useState<AuthProfile | null>(readStoredUser)
   const [checkoutDetails, setCheckoutDetails] =
     useState<CheckoutDetails | null>(null)
   const [orders, setOrders] = useState<OrderRecord[]>([
@@ -106,6 +122,26 @@ function App() {
   ])
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
+
+  useEffect(() => {
+    if (!user?.id) return
+    let isActive = true
+
+    void Promise.all([fetchCart(user.id), fetchOrders(user.id)])
+      .then(([remoteCart, remoteOrders]) => {
+        if (!isActive) return
+        setCartItems(remoteCart)
+        setOrders(remoteOrders.map(mapApiOrder))
+      })
+      .catch(() => {
+        if (!isActive) return
+        setCartItems([])
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [user?.id])
 
   const cartCount = useMemo(
     () => cartItems.reduce((total, item) => total + item.quantity, 0),
@@ -250,20 +286,19 @@ function App() {
 
   async function finishAuth(profile: AuthProfile) {
     setUser(profile)
-    if (profile.id) {
-      try {
-        const [remoteCart, remoteOrders] = await Promise.all([
-          fetchCart(profile.id),
-          fetchOrders(profile.id),
-        ])
-        setCartItems(remoteCart)
-        setOrders(remoteOrders.map(mapApiOrder))
-      } catch {
-        setCartItems([])
-      }
-    }
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(profile))
     const returnTo = (location.state as { from?: string } | null)?.from ?? "/"
     navigate(returnTo, { replace: true, state: null })
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function logout() {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    setUser(null)
+    setCartItems([])
+    setSavedBooks([])
+    setCheckoutDetails(null)
+    navigate("/", { replace: true })
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -295,10 +330,22 @@ function App() {
   }
 
   function saveProfile(profile: AuthProfile) {
-    setUser((current) => ({ ...profile, role: current?.role ?? profile.role }))
-    if (profile.id)
+    const profileId = user?.id
+    setUser((current) => {
+      const updatedProfile = {
+        ...profile,
+        id: current?.id,
+        role: current?.role ?? profile.role,
+      }
+      window.localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify(updatedProfile)
+      )
+      return updatedProfile
+    })
+    if (profileId)
       void updateUserProfile({
-        id: profile.id,
+        id: profileId,
         name: profile.name,
         email: profile.email,
       })
@@ -993,6 +1040,7 @@ function App() {
                   onViewOrders={openOrders}
                   onOpenAdmin={openAdmin}
                   onSelectBook={openDetails}
+                  onLogout={logout}
                 />
               ) : (
                 <Navigate to="/login" state={{ from: "/profile" }} replace />
