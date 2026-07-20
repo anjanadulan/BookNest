@@ -1,5 +1,7 @@
 # BookNest Microservices Architecture & REST API Guide
 
+![BookNest Application Preview](book_nest.png)
+
 This guide explains how BookNest's decoupled microservices function together, describes the user-to-service communication flows, and lists all available REST endpoints.
 
 ---

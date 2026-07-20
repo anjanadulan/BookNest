@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
   ChevronRight,
   CircleUserRound,
+  LogOut,
   Menu,
   Search,
   ShoppingBag,
@@ -530,6 +531,18 @@ function App() {
           >
             <CircleUserRound size={18} />
           </Button>
+          {user && (
+            <Button
+              className="size-9 rounded-full border border-transparent bg-transparent p-0 text-muted hover:bg-coral/10 hover:text-coral lg:h-9 lg:w-auto lg:gap-2 lg:px-3"
+              variant="ghost"
+              type="button"
+              aria-label="Log out"
+              onClick={logout}
+            >
+              <LogOut size={16} />
+              <span className="hidden text-xs lg:inline">Log out</span>
+            </Button>
+          )}
           <Button
             className="ml-0 gap-2 rounded-full border-line bg-transparent px-3 text-xs text-ink hover:border-ink/30 hover:bg-surface"
             variant="outline"
@@ -624,6 +637,18 @@ function App() {
                     >
                       <CircleUserRound size={18} />
                     </Button>
+                    {user && (
+                      <Button
+                        className="size-9 rounded-full border border-transparent bg-transparent p-0 text-muted hover:bg-coral/10 hover:text-coral lg:h-9 lg:w-auto lg:gap-2 lg:px-3"
+                        variant="ghost"
+                        type="button"
+                        aria-label="Log out"
+                        onClick={logout}
+                      >
+                        <LogOut size={16} />
+                        <span className="hidden text-xs lg:inline">Log out</span>
+                      </Button>
+                    )}
                     <Button
                       className="ml-0 gap-2 rounded-full border-line bg-transparent px-3 text-xs text-ink hover:border-ink/30 hover:bg-surface"
                       variant="outline"

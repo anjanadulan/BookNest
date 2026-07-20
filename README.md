@@ -1,5 +1,7 @@
 # BookNest
 
+![BookNest Application Preview](book_nest.png)
+
 BookNest is a full-stack e-bookshop application built with React, Tailwind CSS, shadcn/ui, Spring Boot, and MySQL. The backend is split into five independent services, each with its own database.
 
 The project currently supports:
